@@ -3,6 +3,24 @@ import { getUserFromRequest, isAdminEmail } from "../../../../lib/auth";
 
 const EXTRA_KM_RATE = 2.5;
 
+export async function GET(request) {
+  const { user } = await getUserFromRequest(request);
+  if (!user || !isAdminEmail(user.email)) {
+    return Response.json({ error: "Admin required" }, { status: 403 });
+  }
+
+  const { data, error } = await supabaseService
+    .from("mileage_logs")
+    .select("*, cars(model, reg_number)")
+    .order("id", { ascending: false });
+
+  if (error) {
+    return Response.json({ error: error.message }, { status: 500 });
+  }
+
+  return Response.json({ logs: data });
+}
+
 export async function POST(request) {
   const { user } = await getUserFromRequest(request);
   if (!user || !isAdminEmail(user.email)) {
