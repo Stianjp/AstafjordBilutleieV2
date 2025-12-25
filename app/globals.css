@@ -1,0 +1,24 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-display: "Playfair Display", serif;
+  --font-sans: "Space Grotesk", sans-serif;
+}
+
+body {
+  background-image: radial-gradient(circle at 20% 20%, #ffffff 0%, transparent 40%),
+    radial-gradient(circle at 90% 10%, #f6d8c5 0%, transparent 35%),
+    linear-gradient(180deg, #f5efe6 0%, #f2e7d7 100%);
+  min-height: 100vh;
+}
+
+.gradient-card {
+  background: linear-gradient(135deg, #ffffff 0%, #f7efe6 100%);
+}
+
+.blur-orb {
+  background: radial-gradient(circle, rgba(47, 109, 122, 0.35), transparent 70%);
+  filter: blur(12px);
+}
