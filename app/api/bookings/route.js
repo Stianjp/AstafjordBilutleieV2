@@ -62,12 +62,15 @@ export async function POST(request) {
     return Response.json({ error: "Bilen er ikke tilgjengelig" }, { status: 400 });
   }
 
+  const uniqueLocationIds = Array.from(
+    new Set([payload.pickup_location_id, payload.delivery_location_id])
+  );
   const { data: locations, error: locationError } = await supabaseService
     .from("locations")
     .select("*")
-    .in("id", [payload.pickup_location_id, payload.delivery_location_id]);
+    .in("id", uniqueLocationIds);
 
-  if (locationError || locations.length !== 2) {
+  if (locationError || locations.length !== uniqueLocationIds.length) {
     return Response.json({ error: "Fant ikke lokasjon" }, { status: 404 });
   }
 
