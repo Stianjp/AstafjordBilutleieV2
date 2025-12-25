@@ -18,6 +18,9 @@ export default function CarCard({ car, onReserve, showReserve }) {
           <p className="text-sm text-ink/70">
             {car.seats} seter • {car.transmission} • {car.fuel}
           </p>
+          {car.isUnavailable && (
+            <p className="mt-1 text-xs uppercase tracking-wide text-coral">Opptatt i valgt periode</p>
+          )}
         </div>
         <div className="text-right">
           <p className="text-lg font-semibold">{car.daily_price} kr</p>
@@ -27,7 +30,7 @@ export default function CarCard({ car, onReserve, showReserve }) {
       {showReserve && (
         <button
           onClick={() => onReserve(car)}
-          disabled={!car.active}
+          disabled={!car.active || car.isUnavailable}
           className="mt-4 w-full rounded-full bg-tide px-4 py-2 text-sm uppercase tracking-wide text-white transition hover:bg-ink disabled:cursor-not-allowed disabled:bg-ink/40"
         >
           Reserver bil

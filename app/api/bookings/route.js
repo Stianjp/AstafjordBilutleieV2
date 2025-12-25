@@ -62,6 +62,22 @@ export async function POST(request) {
     return Response.json({ error: "Bilen er ikke tilgjengelig" }, { status: 400 });
   }
 
+  const { data: conflicts, error: conflictError } = await supabaseService
+    .from("bookings")
+    .select("id")
+    .eq("car_id", car.id)
+    .in("status", ["pending", "approved"])
+    .lte("start_date", payload.end_date)
+    .gte("end_date", payload.start_date);
+
+  if (conflictError) {
+    return Response.json({ error: conflictError.message }, { status: 500 });
+  }
+
+  if (conflicts.length > 0) {
+    return Response.json({ error: "Bilen er ikke ledig i valgt periode" }, { status: 409 });
+  }
+
   const uniqueLocationIds = Array.from(
     new Set([payload.pickup_location_id, payload.delivery_location_id])
   );

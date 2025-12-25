@@ -119,6 +119,12 @@ export default function AdminDashboard() {
                 </div>
                 <div className="text-right">
                   <p className="text-lg font-semibold">{booking.calculated_price} kr</p>
+                  <a
+                    className="mt-2 block text-xs uppercase tracking-wide text-ink/60"
+                    href={`/admin/bookings/${booking.id}`}
+                  >
+                    Rediger
+                  </a>
                   {status === "pending" && (
                     <div className="mt-2 flex gap-2 text-xs uppercase tracking-wide">
                       <button
