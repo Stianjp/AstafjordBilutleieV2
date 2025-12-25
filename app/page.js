@@ -128,6 +128,16 @@ export default function HomePage() {
       setMessage("Fyll inn personlig informasjon.");
       return;
     }
+    if (step === 4 && customer.type === "company") {
+      if (!customer.invoice_method) {
+        setMessage("Velg fakturametode.");
+        return;
+      }
+      if (customer.invoice_method === "E-post" && !customer.invoice_email) {
+        setMessage("Skriv inn faktura e-post.");
+        return;
+      }
+    }
     setStep((prev) => Math.min(prev + 1, 5));
   };
 
@@ -321,18 +331,46 @@ export default function HomePage() {
                       onChange={(event) => setCustomer({ ...customer, org_number: event.target.value })}
                       className="rounded-xl border border-ink/20 bg-white/70 p-3"
                     />
-                    <input
-                      placeholder={t.labels.invoiceMethod}
-                      value={customer.invoice_method}
-                      onChange={(event) => setCustomer({ ...customer, invoice_method: event.target.value })}
-                      className="rounded-xl border border-ink/20 bg-white/70 p-3"
-                    />
-                    <input
-                      placeholder={t.labels.invoiceEmail}
-                      value={customer.invoice_email}
-                      onChange={(event) => setCustomer({ ...customer, invoice_email: event.target.value })}
-                      className="rounded-xl border border-ink/20 bg-white/70 p-3"
-                    />
+                    <div>
+                      <p className="text-sm">Fakturametode</p>
+                      <div className="mt-2 flex flex-wrap gap-4 text-sm">
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="invoice_method"
+                            value="EHF"
+                            checked={customer.invoice_method === "EHF"}
+                            onChange={(event) =>
+                              setCustomer({ ...customer, invoice_method: event.target.value })
+                            }
+                          />
+                          EHF
+                        </label>
+                        <label className="flex items-center gap-2">
+                          <input
+                            type="radio"
+                            name="invoice_method"
+                            value="E-post"
+                            checked={customer.invoice_method === "E-post"}
+                            onChange={(event) =>
+                              setCustomer({ ...customer, invoice_method: event.target.value })
+                            }
+                          />
+                          E-post
+                        </label>
+                      </div>
+                    </div>
+                    {customer.invoice_method === "E-post" && (
+                      <input
+                        placeholder={t.labels.invoiceEmail}
+                        value={customer.invoice_email}
+                        onChange={(event) =>
+                          setCustomer({ ...customer, invoice_email: event.target.value })
+                        }
+                        className="rounded-xl border border-ink/20 bg-white/70 p-3"
+                        required
+                      />
+                    )}
                   </div>
                 )}
               </div>
@@ -415,9 +453,8 @@ export default function HomePage() {
 
         <div className="order-2 lg:order-1">
           <div className="mb-6">
-            <p className="text-xs uppercase tracking-[0.3em] text-tide">Astafjord</p>
             <h1 className="font-display text-4xl sm:text-5xl">{t.hero.title}</h1>
-            <p className="mt-3 text-ink/70">{t.hero.subtitle}</p>
+            {t.hero.subtitle && <p className="mt-3 text-ink/70">{t.hero.subtitle}</p>}
           </div>
           <div className="grid gap-6 md:grid-cols-2">
             {cars.map((car) => {
@@ -434,6 +471,13 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+      <footer className="border-t border-ink/10 bg-white/60 px-6 py-10 text-sm">
+        <div className="mx-auto w-full max-w-6xl text-ink/70">
+          <p>Telefon: +47 45658315</p>
+          <p>Har du sporsmal er det bare a ta kontakt med oss e-post: astafjord.bilutleie@gmail.com</p>
+          <p className="mt-4 text-xs uppercase tracking-wide text-ink/50">© 2025 Astafjord Bilutleie</p>
+        </div>
+      </footer>
     </main>
   );
 }
