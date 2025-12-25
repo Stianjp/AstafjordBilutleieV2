@@ -26,11 +26,15 @@ export default function HomePage() {
   const [deliveryLocation, setDeliveryLocation] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [startTime, setStartTime] = useState("10:00");
+  const [endTime, setEndTime] = useState("18:00");
   const [customer, setCustomer] = useState(emptyCustomer);
   const [termsAccepted, setTermsAccepted] = useState(false);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [language, setLanguage] = useState("no");
+  const [unavailableCars, setUnavailableCars] = useState([]);
+  const [step, setStep] = useState(1);
 
   useEffect(() => {
     const stored = getLanguageValue(window.localStorage.getItem("lang"));
@@ -60,6 +64,19 @@ export default function HomePage() {
     loadData();
   }, []);
 
+  useEffect(() => {
+    const fetchAvailability = async () => {
+      if (!startDate || !endDate) {
+        setUnavailableCars([]);
+        return;
+      }
+      const response = await fetch(`/api/availability?start_date=${startDate}&end_date=${endDate}`);
+      const data = await response.json();
+      setUnavailableCars(data.unavailable || []);
+    };
+    fetchAvailability();
+  }, [startDate, endDate]);
+
   const selectedPickup = locations.find((loc) => loc.id === pickupLocation);
   const selectedDelivery = locations.find((loc) => loc.id === deliveryLocation);
 
@@ -82,21 +99,44 @@ export default function HomePage() {
     };
   }, [selectedCar, startDate, endDate, selectedPickup, selectedDelivery]);
 
+  const availableCars = useMemo(() => {
+    if (!startDate || !endDate) return cars.filter((car) => car.active);
+    return cars.filter((car) => car.active && !unavailableCars.includes(car.id));
+  }, [cars, startDate, endDate, unavailableCars]);
+
   const minStartDate = useMemo(() => {
     const next = new Date();
     next.setDate(next.getDate() + 1);
     return next.toISOString().slice(0, 10);
   }, []);
 
-  const submitBooking = async () => {
+  const nextStep = () => {
     setMessage("");
-    if (!selectedCar || !pickupLocation || !deliveryLocation || !startDate || !endDate) {
-      setMessage(t.booking.missing);
+    if (step === 1 && !customer.age_confirmed) {
+      setMessage("Du maa bekrefte at du er over 23 ar.");
       return;
     }
+    if (step === 2 && (!startDate || !endDate || !pickupLocation || !deliveryLocation)) {
+      setMessage("Velg datoer og lokasjon.");
+      return;
+    }
+    if (step === 3 && (!selectedCar || unavailableCars.includes(selectedCar.id))) {
+      setMessage("Velg en tilgjengelig bil.");
+      return;
+    }
+    if (step === 4 && (!customer.first_name || !customer.last_name || !customer.email || !customer.phone)) {
+      setMessage("Fyll inn personlig informasjon.");
+      return;
+    }
+    setStep((prev) => Math.min(prev + 1, 5));
+  };
 
+  const prevStep = () => setStep((prev) => Math.max(prev - 1, 1));
+
+  const submitBooking = async () => {
+    setMessage("");
     if (!termsAccepted) {
-      setMessage(t.booking.acceptTerms);
+      setMessage("Du maa godkjenne leiebetingelsene.");
       return;
     }
 
@@ -127,6 +167,7 @@ export default function HomePage() {
       setEndDate("");
       setCustomer(emptyCustomer);
       setTermsAccepted(false);
+      setStep(1);
     }
     setLoading(false);
   };
@@ -134,94 +175,117 @@ export default function HomePage() {
   return (
     <main className="min-h-screen">
       <Navbar />
-      <section className="relative mx-auto grid w-full max-w-6xl gap-8 px-6 pb-16 pt-4 lg:grid-cols-[1.2fr_0.8fr]">
-        <div>
-          <div className="mb-6">
-            <p className="text-xs uppercase tracking-[0.3em] text-tide">Astafjord</p>
-            <h1 className="font-display text-4xl sm:text-5xl">{t.hero.title}</h1>
-            <p className="mt-3 text-ink/70">{t.hero.subtitle}</p>
-          </div>
-          <div className="grid gap-6 md:grid-cols-2">
-            {cars.map((car) => (
-              <CarCard key={car.id} car={car} showReserve onReserve={setSelectedCar} />
-            ))}
-          </div>
-        </div>
-        <aside className="relative" id="booking">
+      <section className="relative mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 pb-16 pt-4 lg:grid lg:grid-cols-[1.2fr_0.8fr]">
+        <aside className="relative order-1 lg:order-2" id="booking">
           <div className="blur-orb absolute right-0 top-0 h-40 w-40" />
           <div className="gradient-card relative rounded-3xl p-6 shadow-card">
-            <h2 className="font-display text-2xl">{t.booking.title}</h2>
-            <p className="mt-2 text-sm text-ink/70">{t.booking.info}</p>
-            <p className="mt-2 text-xs text-ink/60">{t.booking.kmInfo}</p>
-            <div className="mt-4 space-y-3">
-              <label className="block text-sm">{t.labels.car}</label>
-              <select
-                value={selectedCar?.id || ""}
-                onChange={(event) => {
-                  const car = cars.find((item) => item.id === event.target.value);
-                  setSelectedCar(car || null);
-                }}
-                className="w-full rounded-xl border border-ink/20 bg-white/70 p-3"
-                required
-              >
-                <option value="">{t.labels.selectCar}</option>
-                {cars.map((car) => (
-                  <option key={car.id} value={car.id}>{car.model}</option>
-                ))}
-              </select>
-              <label className="block text-sm">{t.labels.pickup}</label>
-              <select
-                value={pickupLocation}
-                onChange={(event) => setPickupLocation(event.target.value)}
-                className="w-full rounded-xl border border-ink/20 bg-white/70 p-3"
-                required
-              >
-                <option value="">{t.labels.selectLocation}</option>
-                {locations.map((loc) => (
-                  <option key={loc.id} value={loc.id}>{loc.name}</option>
-                ))}
-              </select>
-              <label className="block text-sm">{t.labels.delivery}</label>
-              <select
-                value={deliveryLocation}
-                onChange={(event) => setDeliveryLocation(event.target.value)}
-                className="w-full rounded-xl border border-ink/20 bg-white/70 p-3"
-                required
-              >
-                <option value="">{t.labels.selectLocation}</option>
-                {locations.map((loc) => (
-                  <option key={loc.id} value={loc.id}>{loc.name}</option>
-                ))}
-              </select>
-              <label className="block text-sm">{t.labels.startDate}</label>
-              <input
-                type="date"
-                value={startDate}
-                onChange={(event) => setStartDate(event.target.value)}
-                className="w-full rounded-xl border border-ink/20 bg-white/70 p-3"
-                required
-                min={minStartDate}
-              />
-              <label className="block text-sm">{t.labels.endDate}</label>
-              <input
-                type="date"
-                value={endDate}
-                onChange={(event) => setEndDate(event.target.value)}
-                className="w-full rounded-xl border border-ink/20 bg-white/70 p-3"
-                required
-                min={startDate || minStartDate}
-              />
-            </div>
-            <div className="mt-5">
-              <h3 className="text-sm font-semibold">{t.booking.customer}</h3>
-              <div className="mt-3 grid gap-3">
+            <h2 className="font-display text-2xl">Bestilling</h2>
+            <p className="mt-2 text-sm text-ink/70">Steg {step} av 5</p>
+            {message && <p className="mt-3 text-sm text-coral">{message}</p>}
+
+            {step === 1 && (
+              <div className="mt-4 space-y-3">
+                <p className="text-sm">Sjekk alder</p>
+                <label className="flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={customer.age_confirmed}
+                    onChange={(event) => setCustomer({ ...customer, age_confirmed: event.target.checked })}
+                  />
+                  Jeg er minst 23 ar gammel
+                </label>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="mt-4 space-y-3">
+                <label className="block text-sm">{t.labels.pickup}</label>
+                <select
+                  value={pickupLocation}
+                  onChange={(event) => setPickupLocation(event.target.value)}
+                  className="w-full rounded-xl border border-ink/20 bg-white/70 p-3"
+                >
+                  <option value="">{t.labels.selectLocation}</option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>{loc.name}</option>
+                  ))}
+                </select>
+                <label className="block text-sm">{t.labels.delivery}</label>
+                <select
+                  value={deliveryLocation}
+                  onChange={(event) => setDeliveryLocation(event.target.value)}
+                  className="w-full rounded-xl border border-ink/20 bg-white/70 p-3"
+                >
+                  <option value="">{t.labels.selectLocation}</option>
+                  {locations.map((loc) => (
+                    <option key={loc.id} value={loc.id}>{loc.name}</option>
+                  ))}
+                </select>
+                <label className="block text-sm">{t.labels.startDate}</label>
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(event) => setStartDate(event.target.value)}
+                  className="w-full rounded-xl border border-ink/20 bg-white/70 p-3"
+                  min={minStartDate}
+                />
+                <label className="block text-sm">Starttid</label>
+                <input
+                  type="time"
+                  value={startTime}
+                  onChange={(event) => setStartTime(event.target.value)}
+                  className="w-full rounded-xl border border-ink/20 bg-white/70 p-3"
+                />
+                <label className="block text-sm">{t.labels.endDate}</label>
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(event) => setEndDate(event.target.value)}
+                  className="w-full rounded-xl border border-ink/20 bg-white/70 p-3"
+                  min={startDate || minStartDate}
+                />
+                <label className="block text-sm">Slutttid</label>
+                <input
+                  type="time"
+                  value={endTime}
+                  onChange={(event) => setEndTime(event.target.value)}
+                  className="w-full rounded-xl border border-ink/20 bg-white/70 p-3"
+                />
+              </div>
+            )}
+
+            {step === 3 && (
+              <div className="mt-4 space-y-3">
+                <label className="block text-sm">{t.labels.car}</label>
+                <select
+                  value={selectedCar?.id || ""}
+                  onChange={(event) => {
+                    const car = cars.find((item) => item.id === event.target.value);
+                    setSelectedCar(car || null);
+                  }}
+                  className="w-full rounded-xl border border-ink/20 bg-white/70 p-3"
+                >
+                  <option value="">{t.labels.selectCar}</option>
+                  {availableCars.map((car) => (
+                    <option key={car.id} value={car.id}>{car.model}</option>
+                  ))}
+                </select>
+                {availableCars.length === 0 && (
+                  <p className="text-sm text-coral">Ingen biler tilgjengelig i valgt periode.</p>
+                )}
+              </div>
+            )}
+
+            {step === 4 && (
+              <div className="mt-4 space-y-3">
+                <label className="block text-sm">Kundeinfo</label>
                 <select
                   value={customer.type}
                   onChange={(event) => setCustomer({ ...customer, type: event.target.value })}
                   className="rounded-xl border border-ink/20 bg-white/70 p-3"
                 >
-                  <option value="private">{t.labels.privateType}</option>
-                  <option value="company">{t.labels.companyType}</option>
+                  <option value="private">Privat</option>
+                  <option value="company">Bedrift</option>
                 </select>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <input
@@ -229,14 +293,12 @@ export default function HomePage() {
                     value={customer.first_name}
                     onChange={(event) => setCustomer({ ...customer, first_name: event.target.value })}
                     className="rounded-xl border border-ink/20 bg-white/70 p-3"
-                    required
                   />
                   <input
                     placeholder={t.labels.lastName}
                     value={customer.last_name}
                     onChange={(event) => setCustomer({ ...customer, last_name: event.target.value })}
                     className="rounded-xl border border-ink/20 bg-white/70 p-3"
-                    required
                   />
                 </div>
                 <input
@@ -244,74 +306,133 @@ export default function HomePage() {
                   value={customer.email}
                   onChange={(event) => setCustomer({ ...customer, email: event.target.value })}
                   className="rounded-xl border border-ink/20 bg-white/70 p-3"
-                  required
                 />
                 <input
                   placeholder={t.labels.phone}
                   value={customer.phone}
                   onChange={(event) => setCustomer({ ...customer, phone: event.target.value })}
                   className="rounded-xl border border-ink/20 bg-white/70 p-3"
-                  required
                 />
+                {customer.type === "company" && (
+                  <div className="grid gap-3">
+                    <input
+                      placeholder={t.labels.orgNumber}
+                      value={customer.org_number}
+                      onChange={(event) => setCustomer({ ...customer, org_number: event.target.value })}
+                      className="rounded-xl border border-ink/20 bg-white/70 p-3"
+                    />
+                    <input
+                      placeholder={t.labels.invoiceMethod}
+                      value={customer.invoice_method}
+                      onChange={(event) => setCustomer({ ...customer, invoice_method: event.target.value })}
+                      className="rounded-xl border border-ink/20 bg-white/70 p-3"
+                    />
+                    <input
+                      placeholder={t.labels.invoiceEmail}
+                      value={customer.invoice_email}
+                      onChange={(event) => setCustomer({ ...customer, invoice_email: event.target.value })}
+                      className="rounded-xl border border-ink/20 bg-white/70 p-3"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
+            {step === 5 && (
+              <div className="mt-4 space-y-4 text-sm">
+                <p className="font-semibold">Leiekontrakt</p>
+                <div className="rounded-2xl bg-white/70 p-4">
+                  <p>Kontrakten er inngatt mellom Astafjord bilutleie (tlf +47 45658315) og:</p>
+                  <p>Navn: {customer.first_name} {customer.last_name}</p>
+                  <p>E-post: {customer.email}</p>
+                  <p>Telefon: {customer.phone}</p>
+                  <p>Hentested: {selectedPickup?.name || "-"}</p>
+                  <p>Startdato og tid: {startDate || "-"} kl. {startTime}</p>
+                  <p>Sluttdato og tid: {endDate || "-"} kl. {endTime}</p>
+                  <p>Leieperiode: {pricePreview?.days || "-"} dager</p>
+                  <p>Totalpris: {pricePreview?.total || "-"} NOK</p>
+                  <p>Gratis km per dag: 200 km</p>
+                  <p>Etter dette koster det: NOK 2,50/km</p>
+                  <p>I leieperioden og til bilen er returnert, har leietaker fullt ansvar for bilen og bruken av den.</p>
+                </div>
+                <div className="rounded-2xl bg-white/70 p-4 text-xs">
+                  <p>Leietaker plikter a betale folgende:</p>
+                  <p>Leiens pris som avtalt. Det vil komme tillegg pa kr 2,50/km nar kjorlengden overstiger avtalt fri kjorelende (200 km/dogn).</p>
+                  <p>Leien faktureres forskuddsvis og skal vaere betalt for henting. Dersom kontrakt skrives samme dag, ma betaling skje med kort for henting.</p>
+                  <p>Drivstoff ma etterfylles (tanken skal vaere full ved henting og levering). Mangelfull drivstoff etterfaktureres med 27kr/liter. Drivstofftype: {selectedCar?.fuel || "-"}.</p>
+                  <p>Alle kostnader for bompenger, parkeringsgebyr og fartsboter (etterfaktureres).</p>
+                  <p>Enhver skade pa kjoretoyet i leieperioden, inkludert haerverk og tyveri, opptil en egenandel (dekkes ofte av reiseforsikring) pa: 12 000 NOK.</p>
+                  <p>Leietaker ma inspisere bilen ved henting og notere eventuelle skader. Bor ta bilder av bilen ved mottak.</p>
+                  <p>Leietaker er ansvarlig for vedlikehold (olje, kjolevaeske, dekktrykk). Kontakt utleier ved tvil.</p>
+                  <p className="mt-2">Bruksvilkar</p>
+                  <p>Leietaker ma ikke:</p>
+                  <p>Kjore uten nodvendige tillatelser.</p>
+                  <p>Ta bilen ut av landet uten skriftlig tillatelse.</p>
+                  <p>Transportere passasjerer mot betaling.</p>
+                  <p>Fylle feil drivstoff. Drivstofftype: {selectedCar?.fuel || "-"}.</p>
+                  <p>Kjore utenfor offentlig vei.</p>
+                  <p className="mt-2">Ved a trykke godkjenn, godkjenner du leiekontrakten.</p>
+                </div>
                 <label className="flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
-                    checked={customer.age_confirmed}
-                    onChange={(event) => setCustomer({ ...customer, age_confirmed: event.target.checked })}
+                    checked={termsAccepted}
+                    onChange={(event) => setTermsAccepted(event.target.checked)}
                   />
-                  {t.labels.ageConfirm}
+                  Jeg godkjenner leiekontrakten
                 </label>
-              </div>
-            </div>
-            <div className="mt-5">
-              <h3 className="text-sm font-semibold">{t.booking.company}</h3>
-              <div className="mt-3 grid gap-3">
-                <input
-                  placeholder={t.labels.orgNumber}
-                  value={customer.org_number}
-                  onChange={(event) => setCustomer({ ...customer, org_number: event.target.value })}
-                  className="rounded-xl border border-ink/20 bg-white/70 p-3"
-                />
-                <input
-                  placeholder={t.labels.invoiceMethod}
-                  value={customer.invoice_method}
-                  onChange={(event) => setCustomer({ ...customer, invoice_method: event.target.value })}
-                  className="rounded-xl border border-ink/20 bg-white/70 p-3"
-                />
-                <input
-                  placeholder={t.labels.invoiceEmail}
-                  value={customer.invoice_email}
-                  onChange={(event) => setCustomer({ ...customer, invoice_email: event.target.value })}
-                  className="rounded-xl border border-ink/20 bg-white/70 p-3"
-                />
-              </div>
-            </div>
-            <label className="mt-4 flex items-center gap-2 text-sm">
-              <input
-                type="checkbox"
-                checked={termsAccepted}
-                onChange={(event) => setTermsAccepted(event.target.checked)}
-              />
-              {t.booking.terms}
-            </label>
-            {pricePreview && (
-              <div className="mt-4 rounded-2xl bg-white/70 p-4 text-sm">
-                <p>{pricePreview.days} {t.labels.daysLabel}</p>
-                <p>{t.labels.deliveryFee}: {pricePreview.deliveryFee} kr</p>
-                <p>{t.labels.pickupFee}: {pricePreview.pickupFee} kr</p>
-                <p className="mt-2 text-lg font-semibold">{t.labels.priceTotal}: {pricePreview.total} kr</p>
+                <button
+                  onClick={submitBooking}
+                  disabled={loading || (selectedCar && unavailableCars.includes(selectedCar.id))}
+                  className="mt-2 w-full rounded-full bg-ink px-4 py-3 text-sm uppercase tracking-wide text-white disabled:cursor-not-allowed disabled:bg-ink/40"
+                >
+                  {loading ? "Sender..." : "Send bestilling"}
+                </button>
               </div>
             )}
-            {message && <p className="mt-3 text-sm text-coral">{message}</p>}
-            <button
-              onClick={submitBooking}
-              disabled={loading}
-              className="mt-5 w-full rounded-full bg-ink px-4 py-3 text-sm uppercase tracking-wide text-white"
-            >
-              {loading ? "Sender..." : t.booking.submit}
-            </button>
+
+            <div className="mt-6 flex items-center justify-between text-xs uppercase tracking-wide">
+              <button
+                type="button"
+                onClick={prevStep}
+                disabled={step === 1}
+                className="rounded-full border border-ink/20 px-4 py-2 disabled:opacity-40"
+              >
+                Tilbake
+              </button>
+              {step < 5 && (
+                <button
+                  type="button"
+                  onClick={nextStep}
+                  className="rounded-full bg-ink px-4 py-2 text-white"
+                >
+                  Videre
+                </button>
+              )}
+            </div>
           </div>
         </aside>
+
+        <div className="order-2 lg:order-1">
+          <div className="mb-6">
+            <p className="text-xs uppercase tracking-[0.3em] text-tide">Astafjord</p>
+            <h1 className="font-display text-4xl sm:text-5xl">{t.hero.title}</h1>
+            <p className="mt-3 text-ink/70">{t.hero.subtitle}</p>
+          </div>
+          <div className="grid gap-6 md:grid-cols-2">
+            {cars.map((car) => {
+              const isUnavailable = startDate && endDate && unavailableCars.includes(car.id);
+              return (
+                <CarCard
+                  key={car.id}
+                  car={{ ...car, isUnavailable }}
+                  showReserve
+                  onReserve={setSelectedCar}
+                />
+              );
+            })}
+          </div>
+        </div>
       </section>
     </main>
   );
