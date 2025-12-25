@@ -87,7 +87,7 @@ export default function AdminDashboard() {
         <div className="mt-4 flex flex-wrap gap-3 text-xs uppercase tracking-wide">
           <a className="rounded-full border border-ink/20 px-4 py-2" href="/admin/cars">Biler</a>
           <a className="rounded-full border border-ink/20 px-4 py-2" href="/admin/locations">Lokasjoner</a>
-          <a className="rounded-full border border-ink/20 px-4 py-2" href="/admin/mileage">Kilometer</a>
+          <a className="rounded-full border border-ink/20 px-4 py-2" href="/admin/mileage">Kjorebok</a>
         </div>
         <div className="mt-6 flex flex-wrap gap-3 text-xs uppercase tracking-wide">
           {statusTabs.map((tab) => (

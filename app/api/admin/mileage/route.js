@@ -10,7 +10,7 @@ export async function POST(request) {
   }
 
   const payload = await request.json();
-  if (!payload.booking_id || payload.km_start == null || payload.km_end == null) {
+  if ((!payload.booking_id && !payload.car_id) || payload.km_start == null || payload.km_end == null) {
     return Response.json({ error: "Missing data" }, { status: 400 });
   }
 
@@ -18,30 +18,37 @@ export async function POST(request) {
     return Response.json({ error: "Ugyldig kilometerstand" }, { status: 400 });
   }
 
-  const { data: booking, error: bookingError } = await supabaseService
-    .from("bookings")
-    .select("*, cars(*)")
-    .eq("id", payload.booking_id)
-    .single();
+  let booking = null;
+  if (payload.booking_id) {
+    const { data: bookingData, error: bookingError } = await supabaseService
+      .from("bookings")
+      .select("*, cars(*)")
+      .eq("id", payload.booking_id)
+      .single();
 
-  if (bookingError) {
-    return Response.json({ error: bookingError.message }, { status: 500 });
+    if (bookingError) {
+      return Response.json({ error: bookingError.message }, { status: 500 });
+    }
+    booking = bookingData;
   }
 
   const drivenKm = payload.km_end - payload.km_start;
-  const extraKm = Math.max(0, drivenKm - booking.included_km);
-  const extraCost = extraKm * EXTRA_KM_RATE;
+  const includedKm = booking ? booking.included_km : null;
+  const extraKm = booking ? Math.max(0, drivenKm - booking.included_km) : null;
+  const extraCost = booking ? extraKm * EXTRA_KM_RATE : null;
+  const carId = payload.car_id || booking.car_id;
 
   const { data: log, error } = await supabaseService
     .from("mileage_logs")
     .insert({
-      booking_id: booking.id,
-      car_id: booking.car_id,
+      booking_id: booking?.id || null,
+      car_id: carId,
       km_start: payload.km_start,
       km_end: payload.km_end,
       driven_km: drivenKm,
       extra_km: extraKm,
-      extra_cost: extraCost
+      extra_cost: extraCost,
+      reason: payload.reason || null
     })
     .select("*")
     .single();
@@ -53,7 +60,7 @@ export async function POST(request) {
   await supabaseService
     .from("cars")
     .update({ current_km: payload.km_end })
-    .eq("id", booking.car_id);
+    .eq("id", carId);
 
-  return Response.json({ mileage: log });
+  return Response.json({ mileage: log, included_km: includedKm });
 }

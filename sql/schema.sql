@@ -52,13 +52,14 @@ create table if not exists bookings (
 
 create table if not exists mileage_logs (
   id uuid primary key default uuid_generate_v4(),
-  booking_id uuid not null references bookings(id),
+  booking_id uuid references bookings(id),
   car_id uuid not null references cars(id),
   km_start numeric,
   km_end numeric,
   driven_km numeric,
   extra_km numeric,
-  extra_cost numeric
+  extra_cost numeric,
+  reason text
 );
 
 create table if not exists admins (
