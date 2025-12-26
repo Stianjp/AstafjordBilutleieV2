@@ -18,6 +18,8 @@ export default function AdminBookingDetail() {
     start_time: "",
     end_date: "",
     end_time: "",
+    start_km: "",
+    end_km: "",
     days: "",
     calculated_price: ""
   });
@@ -56,6 +58,8 @@ export default function AdminBookingDetail() {
       start_time: bookingData.booking.start_time || "",
       end_date: bookingData.booking.end_date,
       end_time: bookingData.booking.end_time || "",
+      start_km: bookingData.booking.start_km ?? "",
+      end_km: bookingData.booking.end_km ?? "",
       days: bookingData.booking.days,
       calculated_price: bookingData.booking.calculated_price
     });
@@ -81,7 +85,9 @@ export default function AdminBookingDetail() {
       body: JSON.stringify({
         ...form,
         days: form.days ? Number(form.days) : undefined,
-        calculated_price: form.calculated_price ? Number(form.calculated_price) : undefined
+        calculated_price: form.calculated_price ? Number(form.calculated_price) : undefined,
+        start_km: form.start_km === "" ? null : Number(form.start_km),
+        end_km: form.end_km === "" ? null : Number(form.end_km)
       })
     });
 
@@ -196,6 +202,26 @@ export default function AdminBookingDetail() {
                   type="number"
                   value={form.calculated_price}
                   onChange={(event) => setForm({ ...form, calculated_price: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                />
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="text-sm">Start km</label>
+                <input
+                  type="number"
+                  value={form.start_km}
+                  onChange={(event) => setForm({ ...form, start_km: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                />
+              </div>
+              <div>
+                <label className="text-sm">Slutt km</label>
+                <input
+                  type="number"
+                  value={form.end_km}
+                  onChange={(event) => setForm({ ...form, end_km: event.target.value })}
                   className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
                 />
               </div>

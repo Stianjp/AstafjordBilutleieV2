@@ -46,10 +46,12 @@ create table if not exists bookings (
   end_time time,
   days integer not null,
   included_km integer not null,
+  start_km numeric,
+  end_km numeric,
   delivery_fee numeric not null,
   pickup_fee numeric not null,
   calculated_price numeric not null,
-  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected', 'cancelled')),
+  status text not null default 'pending' check (status in ('pending', 'approved', 'rejected', 'cancelled', 'completed')),
   terms_accepted boolean not null default false
 );
 

@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import { supabase } from "../../lib/supabaseClient";
 
-const statusTabs = ["pending", "approved", "rejected", "cancelled", "active", "future", "past"];
+const statusTabs = ["pending", "approved", "rejected", "cancelled", "active", "future", "past", "completed"];
 
 export default function AdminDashboard() {
   const [status, setStatus] = useState("pending");
   const [bookings, setBookings] = useState([]);
   const [message, setMessage] = useState("");
+  const [kmDrafts, setKmDrafts] = useState({});
 
   const loadBookings = async (selectedStatus = status) => {
     const { data } = await supabase.auth.getSession();
@@ -52,7 +53,22 @@ export default function AdminDashboard() {
         nextBookings = nextBookings.filter((booking) => new Date(booking.end_date) < today);
       }
     }
+    if (selectedStatus === "completed") {
+      nextBookings = nextBookings.filter((booking) => booking.status === "completed");
+    }
     setBookings(nextBookings);
+    setKmDrafts((prev) => {
+      const next = { ...prev };
+      nextBookings.forEach((booking) => {
+        if (!next[booking.id]) {
+          next[booking.id] = {
+            start_km: booking.start_km ?? "",
+            end_km: booking.end_km ?? ""
+          };
+        }
+      });
+      return next;
+    });
   };
 
   const updateStatus = async (id, nextStatus) => {
@@ -72,6 +88,58 @@ export default function AdminDashboard() {
     if (response.ok) {
       loadBookings();
     }
+  };
+
+  const deleteBooking = async (id) => {
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return;
+
+    const response = await fetch(`/api/admin/bookings/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    });
+
+    if (response.ok) {
+      loadBookings();
+    }
+  };
+
+  const saveKm = async (booking) => {
+    const draft = kmDrafts[booking.id];
+    if (!draft) return;
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return;
+
+    const response = await fetch(`/api/admin/bookings/${booking.id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        pickup_location_id: booking.pickup_location_id,
+        delivery_location_id: booking.delivery_location_id,
+        start_date: booking.start_date,
+        end_date: booking.end_date,
+        start_time: booking.start_time || null,
+        end_time: booking.end_time || null,
+        days: booking.days,
+        calculated_price: booking.calculated_price,
+        start_km: draft.start_km === "" ? null : Number(draft.start_km),
+        end_km: draft.end_km === "" ? null : Number(draft.end_km)
+      })
+    });
+
+    const dataResponse = await response.json();
+    if (!response.ok) {
+      setMessage(dataResponse.error || "Kunne ikke lagre kilometer.");
+      return;
+    }
+
+    setBookings((prev) => prev.map((item) => (item.id === booking.id ? dataResponse.booking : item)));
+    loadBookings();
   };
 
   useEffect(() => {
@@ -125,6 +193,43 @@ export default function AdminDashboard() {
                   >
                     Rediger
                   </a>
+                  {["active", "future", "past"].includes(status) && (
+                    <div className="mt-3 rounded-2xl border border-ink/10 bg-white/60 p-3 text-xs">
+                      <p className="uppercase tracking-wide text-ink/50">Kilometer</p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <input
+                          type="number"
+                          placeholder="Start km"
+                          value={kmDrafts[booking.id]?.start_km ?? ""}
+                          onChange={(event) =>
+                            setKmDrafts((prev) => ({
+                              ...prev,
+                              [booking.id]: { ...prev[booking.id], start_km: event.target.value }
+                            }))
+                          }
+                          className="w-24 rounded-lg border border-ink/20 bg-white/80 p-2"
+                        />
+                        <input
+                          type="number"
+                          placeholder="Slutt km"
+                          value={kmDrafts[booking.id]?.end_km ?? ""}
+                          onChange={(event) =>
+                            setKmDrafts((prev) => ({
+                              ...prev,
+                              [booking.id]: { ...prev[booking.id], end_km: event.target.value }
+                            }))
+                          }
+                          className="w-24 rounded-lg border border-ink/20 bg-white/80 p-2"
+                        />
+                        <button
+                          className="rounded-full border border-ink/20 px-3 py-1 text-[10px] uppercase tracking-wide"
+                          onClick={() => saveKm(booking)}
+                        >
+                          Lagre km
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   {status === "pending" && (
                     <div className="mt-2 flex gap-2 text-xs uppercase tracking-wide">
                       <button
@@ -139,7 +244,21 @@ export default function AdminDashboard() {
                       >
                         Avvis
                       </button>
+                      <button
+                        className="text-ink/60"
+                        onClick={() => updateStatus(booking.id, "cancelled")}
+                      >
+                        Kanseller
+                      </button>
                     </div>
+                  )}
+                  {status === "rejected" && (
+                    <button
+                      className="mt-2 text-xs uppercase tracking-wide text-coral"
+                      onClick={() => deleteBooking(booking.id)}
+                    >
+                      Slett
+                    </button>
                   )}
                 </div>
               </div>

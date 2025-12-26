@@ -62,6 +62,14 @@ export default function AdminMileagePage() {
     loadLogs();
   }, []);
 
+  useEffect(() => {
+    if (!carId || kmStart) return;
+    const car = cars.find((item) => item.id === carId);
+    if (car && car.current_km != null) {
+      setKmStart(String(car.current_km));
+    }
+  }, [carId, cars, kmStart]);
+
   const totalKm = useMemo(() => {
     if (!kmStart || !kmEnd) return 0;
     return Math.max(0, Number(kmEnd) - Number(kmStart));
