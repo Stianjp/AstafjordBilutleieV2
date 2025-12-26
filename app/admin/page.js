@@ -6,6 +6,17 @@ import { supabase } from "../../lib/supabaseClient";
 
 const statusTabs = ["pending", "approved", "rejected", "cancelled", "active", "future", "past", "completed"];
 
+const statusHelp = {
+  pending: "Her vises bookingforesporsler. Flytt ved a godkjenne, avvise eller kansellere.",
+  approved: "Her ligger alle godkjente bookinger. Se aktive/future/past for dato-baserte visninger.",
+  rejected: "Her er oversikt over avviste bookinger. Disse kan slettes.",
+  cancelled: "Her er oversikt over kansellerte bookinger. Disse kan slettes.",
+  active: "Her ligger aktive leier. Nar leien er ferdig flyttes den automatisk til past.",
+  future: "Her er oversikt over fremtidige leier. Disse flyttes automatisk til active nar perioden starter.",
+  past: "Her er avsluttede leier. For a flytte til completed, oppdater sluttkm.",
+  completed: "Her er fullforte leieforhold med registrert sluttkm."
+};
+
 export default function AdminDashboard() {
   const [status, setStatus] = useState("pending");
   const [bookings, setBookings] = useState([]);
@@ -168,11 +179,7 @@ export default function AdminDashboard() {
             </button>
           ))}
         </div>
-        {status === "past" && (
-          <p className="mt-4 text-sm text-ink/70">
-            For a flytte bilen fra denne fanen til completed, ma du oppdatere sluttkm.
-          </p>
-        )}
+        <p className="mt-4 text-sm text-ink/70">{statusHelp[status]}</p>
         {message && <p className="mt-4 text-sm text-coral">{message}</p>}
         <div className="mt-6 grid gap-4">
           {bookings.map((booking) => (

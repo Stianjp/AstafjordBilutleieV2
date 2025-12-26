@@ -19,7 +19,7 @@ export async function PATCH(request, { params }) {
     .from("bookings")
     .update({ status })
     .eq("id", params.id)
-    .select("*, customers(*), cars(*)")
+    .select("*, customers(*), cars(*), pickup:pickup_location_id(*), delivery:delivery_location_id(*)")
     .single();
 
   if (error) {
