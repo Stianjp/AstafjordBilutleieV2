@@ -159,7 +159,9 @@ export default function HomePage() {
         pickup_location_id: pickupLocation,
         delivery_location_id: deliveryLocation,
         start_date: startDate,
+        start_time: startTime,
         end_date: endDate,
+        end_time: endTime,
         terms_accepted: termsAccepted,
         customer
       })
@@ -283,6 +285,16 @@ export default function HomePage() {
                 {availableCars.length === 0 && (
                   <p className="text-sm text-coral">Ingen biler tilgjengelig i valgt periode.</p>
                 )}
+                {selectedCar && pricePreview && (
+                  <div className="rounded-2xl bg-white/70 p-4 text-sm">
+                    <p className="font-medium">{selectedCar.model}</p>
+                    <p>{pricePreview.days} {t.labels.daysLabel}</p>
+                    <p>{t.labels.deliveryFee}: {pricePreview.deliveryFee} kr</p>
+                    <p>{t.labels.pickupFee}: {pricePreview.pickupFee} kr</p>
+                    <p>Inkludert km: {pricePreview.days * 200} km</p>
+                    <p className="mt-2 text-lg font-semibold">{t.labels.priceTotal}: {pricePreview.total} kr</p>
+                  </div>
+                )}
               </div>
             )}
 
@@ -373,22 +385,33 @@ export default function HomePage() {
                     )}
                   </div>
                 )}
+                {selectedCar && pricePreview && (
+                  <div className="rounded-2xl bg-white/70 p-4 text-sm">
+                    <p className="font-medium">{selectedCar.model}</p>
+                    <p>{pricePreview.days} {t.labels.daysLabel}</p>
+                    <p>{t.labels.deliveryFee}: {pricePreview.deliveryFee} kr</p>
+                    <p>{t.labels.pickupFee}: {pricePreview.pickupFee} kr</p>
+                    <p>Inkludert km: {pricePreview.days * 200} km</p>
+                    <p className="mt-2 text-lg font-semibold">{t.labels.priceTotal}: {pricePreview.total} kr</p>
+                  </div>
+                )}
               </div>
             )}
 
             {step === 5 && (
               <div className="mt-4 space-y-4 text-sm">
                 <p className="font-semibold">Leiekontrakt</p>
-                <div className="rounded-2xl bg-white/70 p-4">
+                <div className="rounded-2xl bg-white/70 p-6 text-sm">
                   <p>Kontrakten er inngatt mellom Astafjord bilutleie (tlf +47 45658315) og:</p>
                   <p>Navn: {customer.first_name} {customer.last_name}</p>
                   <p>E-post: {customer.email}</p>
                   <p>Telefon: {customer.phone}</p>
                   <p>Hentested: {selectedPickup?.name || "-"}</p>
+                  <p>Leveringssted: {selectedDelivery?.name || "-"}</p>
                   <p>Startdato og tid: {startDate || "-"} kl. {startTime}</p>
                   <p>Sluttdato og tid: {endDate || "-"} kl. {endTime}</p>
                   <p>Leieperiode: {pricePreview?.days || "-"} dager</p>
-                  <p>Totalpris: {pricePreview?.total || "-"} NOK</p>
+                  <p className="mt-2 text-lg font-semibold">Totalpris: {pricePreview?.total || "-"} NOK</p>
                   <p>Gratis km per dag: 200 km</p>
                   <p>Etter dette koster det: NOK 2,50/km</p>
                   <p>I leieperioden og til bilen er returnert, har leietaker fullt ansvar for bilen og bruken av den.</p>
@@ -456,19 +479,21 @@ export default function HomePage() {
             <h1 className="font-display text-4xl sm:text-5xl">{t.hero.title}</h1>
             {t.hero.subtitle && <p className="mt-3 text-ink/70">{t.hero.subtitle}</p>}
           </div>
-          <div className="grid gap-6 md:grid-cols-2">
-            {cars.map((car) => {
-              const isUnavailable = startDate && endDate && unavailableCars.includes(car.id);
-              return (
-                <CarCard
-                  key={car.id}
-                  car={{ ...car, isUnavailable }}
-                  showReserve
-                  onReserve={setSelectedCar}
-                />
-              );
-            })}
-          </div>
+          {step < 5 && (
+            <div className="grid gap-6 md:grid-cols-2">
+              {cars.map((car) => {
+                const isUnavailable = startDate && endDate && unavailableCars.includes(car.id);
+                return (
+                  <CarCard
+                    key={car.id}
+                    car={{ ...car, isUnavailable }}
+                    showReserve
+                    onReserve={setSelectedCar}
+                  />
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
       <footer className="border-t border-ink/10 bg-white/60 px-6 py-10 text-sm">

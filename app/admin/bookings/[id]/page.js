@@ -15,7 +15,9 @@ export default function AdminBookingDetail() {
     pickup_location_id: "",
     delivery_location_id: "",
     start_date: "",
+    start_time: "",
     end_date: "",
+    end_time: "",
     days: "",
     calculated_price: ""
   });
@@ -51,7 +53,9 @@ export default function AdminBookingDetail() {
       pickup_location_id: bookingData.booking.pickup_location_id,
       delivery_location_id: bookingData.booking.delivery_location_id,
       start_date: bookingData.booking.start_date,
+      start_time: bookingData.booking.start_time || "",
       end_date: bookingData.booking.end_date,
+      end_time: bookingData.booking.end_time || "",
       days: bookingData.booking.days,
       calculated_price: bookingData.booking.calculated_price
     });
@@ -152,6 +156,26 @@ export default function AdminBookingDetail() {
                   type="date"
                   value={form.end_date}
                   onChange={(event) => setForm({ ...form, end_date: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                />
+              </div>
+            </div>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="text-sm">Starttid</label>
+                <input
+                  type="time"
+                  value={form.start_time}
+                  onChange={(event) => setForm({ ...form, start_time: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                />
+              </div>
+              <div>
+                <label className="text-sm">Slutttid</label>
+                <input
+                  type="time"
+                  value={form.end_time}
+                  onChange={(event) => setForm({ ...form, end_time: event.target.value })}
                   className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
                 />
               </div>
