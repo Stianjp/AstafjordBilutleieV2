@@ -168,6 +168,11 @@ export default function AdminDashboard() {
             </button>
           ))}
         </div>
+        {status === "past" && (
+          <p className="mt-4 text-sm text-ink/70">
+            For a flytte bilen fra denne fanen til completed, ma du oppdatere sluttkm.
+          </p>
+        )}
         {message && <p className="mt-4 text-sm text-coral">{message}</p>}
         <div className="mt-6 grid gap-4">
           {bookings.map((booking) => (
@@ -252,7 +257,23 @@ export default function AdminDashboard() {
                       </button>
                     </div>
                   )}
+                  {status === "approved" && (
+                    <button
+                      className="mt-2 text-xs uppercase tracking-wide text-ink/60"
+                      onClick={() => updateStatus(booking.id, "cancelled")}
+                    >
+                      Kanseller
+                    </button>
+                  )}
                   {status === "rejected" && (
+                    <button
+                      className="mt-2 text-xs uppercase tracking-wide text-coral"
+                      onClick={() => deleteBooking(booking.id)}
+                    >
+                      Slett
+                    </button>
+                  )}
+                  {status === "cancelled" && (
                     <button
                       className="mt-2 text-xs uppercase tracking-wide text-coral"
                       onClick={() => deleteBooking(booking.id)}
