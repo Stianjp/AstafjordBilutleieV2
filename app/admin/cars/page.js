@@ -7,6 +7,7 @@ import { supabase } from "../../../lib/supabaseClient";
 const emptyForm = {
   reg_number: "",
   model: "",
+  image_url: "",
   seats: 5,
   transmission: "Manual",
   fuel: "Diesel",
@@ -89,6 +90,7 @@ export default function AdminCarsPage() {
     setForm({
       reg_number: car.reg_number,
       model: car.model,
+      image_url: car.image_url || "",
       seats: car.seats,
       transmission: car.transmission,
       fuel: car.fuel,
@@ -140,6 +142,15 @@ export default function AdminCarsPage() {
                 onChange={(event) => setForm({ ...form, model: event.target.value })}
                 className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
                 required
+              />
+            </div>
+            <div className="mt-4">
+              <label className="text-sm">Bilde-URL</label>
+              <input
+                value={form.image_url}
+                onChange={(event) => setForm({ ...form, image_url: event.target.value })}
+                className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                placeholder="/V70.png"
               />
             </div>
             <div className="mt-4 grid gap-3 sm:grid-cols-2">

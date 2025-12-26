@@ -31,6 +31,7 @@ export async function POST(request) {
     .insert({
       reg_number: payload.reg_number,
       model: payload.model,
+      image_url: payload.image_url || null,
       seats: payload.seats,
       transmission: payload.transmission,
       fuel: payload.fuel,

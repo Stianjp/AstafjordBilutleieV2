@@ -11,6 +11,7 @@ create table if not exists cars (
   id uuid primary key default uuid_generate_v4(),
   reg_number text not null unique,
   model text not null,
+  image_url text,
   seats integer not null,
   transmission text not null,
   fuel text not null,

@@ -479,6 +479,12 @@ export default function HomePage() {
             <h1 className="font-display text-4xl sm:text-5xl">{t.hero.title}</h1>
             {t.hero.subtitle && <p className="mt-3 text-ink/70">{t.hero.subtitle}</p>}
           </div>
+          <div className="mb-6 rounded-2xl bg-white/60 p-4 text-sm text-ink/70">
+            <p className="font-medium text-ink">Lokasjoner for bilutleie</p>
+            <p className="mt-2">
+              Lavangen, Salangen, Gratangen, Dyrøy, Ibestad, Setermoen, Evenes Airport, Narvik, Bjerkvik og Bardufoss Airport.
+            </p>
+          </div>
           {step < 5 && (
             <div className="grid gap-6 md:grid-cols-2">
               {cars.map((car) => {

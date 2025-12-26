@@ -13,6 +13,7 @@ export async function PUT(request, { params }) {
     .update({
       reg_number: payload.reg_number,
       model: payload.model,
+      image_url: payload.image_url || null,
       seats: payload.seats,
       transmission: payload.transmission,
       fuel: payload.fuel,
