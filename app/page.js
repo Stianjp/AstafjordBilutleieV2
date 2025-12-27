@@ -113,28 +113,28 @@ export default function HomePage() {
   const nextStep = () => {
     setMessage("");
     if (step === 1 && !customer.age_confirmed) {
-      setMessage("Du maa bekrefte at du er over 23 ar.");
+      setMessage(t.bookingFlow.ageRequired);
       return;
     }
     if (step === 2 && (!startDate || !endDate || !pickupLocation || !deliveryLocation)) {
-      setMessage("Velg datoer og lokasjon.");
+      setMessage(t.bookingFlow.pickRequired);
       return;
     }
     if (step === 3 && (!selectedCar || unavailableCars.includes(selectedCar.id))) {
-      setMessage("Velg en tilgjengelig bil.");
+      setMessage(t.bookingFlow.carRequired);
       return;
     }
     if (step === 4 && (!customer.first_name || !customer.last_name || !customer.email || !customer.phone)) {
-      setMessage("Fyll inn personlig informasjon.");
+      setMessage(t.bookingFlow.customerRequired);
       return;
     }
     if (step === 4 && customer.type === "company") {
       if (!customer.invoice_method) {
-        setMessage("Velg fakturametode.");
+        setMessage(t.bookingFlow.invoiceRequired);
         return;
       }
       if (customer.invoice_method === "E-post" && !customer.invoice_email) {
-        setMessage("Skriv inn faktura e-post.");
+        setMessage(t.bookingFlow.invoiceEmailRequired);
         return;
       }
     }
@@ -146,7 +146,7 @@ export default function HomePage() {
   const submitBooking = async () => {
     setMessage("");
     if (!termsAccepted) {
-      setMessage("Du maa godkjenne leiebetingelsene.");
+      setMessage(t.booking.acceptTerms);
       return;
     }
 
@@ -191,26 +191,29 @@ export default function HomePage() {
         <aside className="relative order-1 lg:order-2" id="booking">
           <div className="blur-orb absolute right-0 top-0 h-40 w-40" />
           <div className="gradient-card relative rounded-3xl p-6 shadow-card">
-            <h2 className="font-display text-2xl">Bestilling</h2>
-            <p className="mt-2 text-sm text-ink/70">Steg {step} av 5</p>
+            <h2 className="font-display text-2xl">{t.bookingFlow.title}</h2>
+            <p className="mt-2 text-sm text-ink/70">
+              {t.bookingFlow.stepLabel.replace("{step}", String(step))}
+            </p>
             {message && <p className="mt-3 text-sm text-coral">{message}</p>}
 
             {step === 1 && (
               <div className="mt-4 space-y-3">
-                <p className="text-sm">Sjekk alder</p>
+                <p className="text-sm">{t.bookingFlow.step1Title}</p>
                 <label className="flex items-center gap-2 text-sm">
                   <input
                     type="checkbox"
                     checked={customer.age_confirmed}
                     onChange={(event) => setCustomer({ ...customer, age_confirmed: event.target.checked })}
                   />
-                  Jeg er minst 23 ar gammel
+                  {t.labels.ageConfirm}
                 </label>
               </div>
             )}
 
             {step === 2 && (
               <div className="mt-4 space-y-3">
+                <p className="text-sm">{t.bookingFlow.step2Title}</p>
                 <label className="block text-sm">{t.labels.pickup}</label>
                 <select
                   value={pickupLocation}
@@ -241,7 +244,7 @@ export default function HomePage() {
                   className="w-full rounded-xl border border-ink/20 bg-white/70 p-3"
                   min={minStartDate}
                 />
-                <label className="block text-sm">Starttid</label>
+                <label className="block text-sm">{t.bookingFlow.startTime}</label>
                 <input
                   type="time"
                   value={startTime}
@@ -256,7 +259,7 @@ export default function HomePage() {
                   className="w-full rounded-xl border border-ink/20 bg-white/70 p-3"
                   min={startDate || minStartDate}
                 />
-                <label className="block text-sm">Slutttid</label>
+                <label className="block text-sm">{t.bookingFlow.endTime}</label>
                 <input
                   type="time"
                   value={endTime}
@@ -268,6 +271,7 @@ export default function HomePage() {
 
             {step === 3 && (
               <div className="mt-4 space-y-3">
+                <p className="text-sm">{t.bookingFlow.step3Title}</p>
                 <label className="block text-sm">{t.labels.car}</label>
                 <select
                   value={selectedCar?.id || ""}
@@ -283,7 +287,7 @@ export default function HomePage() {
                   ))}
                 </select>
                 {availableCars.length === 0 && (
-                  <p className="text-sm text-coral">Ingen biler tilgjengelig i valgt periode.</p>
+                  <p className="text-sm text-coral">{t.bookingFlow.noCars}</p>
                 )}
                 {selectedCar && pricePreview && (
                   <div className="rounded-2xl bg-white/70 p-4 text-sm">
@@ -291,7 +295,7 @@ export default function HomePage() {
                     <p>{pricePreview.days} {t.labels.daysLabel}</p>
                     <p>{t.labels.deliveryFee}: {pricePreview.deliveryFee} kr</p>
                     <p>{t.labels.pickupFee}: {pricePreview.pickupFee} kr</p>
-                    <p>Inkludert km: {pricePreview.days * 200} km</p>
+                    <p>{t.bookingFlow.includedKm}: {pricePreview.days * 200} km</p>
                     <p className="mt-2 text-lg font-semibold">{t.labels.priceTotal}: {pricePreview.total} kr</p>
                   </div>
                 )}
@@ -300,14 +304,14 @@ export default function HomePage() {
 
             {step === 4 && (
               <div className="mt-4 space-y-3">
-                <label className="block text-sm">Kundeinfo</label>
+                <label className="block text-sm">{t.bookingFlow.step4Title}</label>
                 <select
                   value={customer.type}
                   onChange={(event) => setCustomer({ ...customer, type: event.target.value })}
                   className="rounded-xl border border-ink/20 bg-white/70 p-3"
                 >
-                  <option value="private">Privat</option>
-                  <option value="company">Bedrift</option>
+                  <option value="private">{t.labels.privateType}</option>
+                  <option value="company">{t.labels.companyType}</option>
                 </select>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <input
@@ -344,7 +348,7 @@ export default function HomePage() {
                       className="rounded-xl border border-ink/20 bg-white/70 p-3"
                     />
                     <div>
-                      <p className="text-sm">Fakturametode</p>
+                      <p className="text-sm">{t.bookingFlow.invoiceMethod}</p>
                       <div className="mt-2 flex flex-wrap gap-4 text-sm">
                         <label className="flex items-center gap-2">
                           <input
@@ -356,7 +360,7 @@ export default function HomePage() {
                               setCustomer({ ...customer, invoice_method: event.target.value })
                             }
                           />
-                          EHF
+                          {t.bookingFlow.invoiceEHF}
                         </label>
                         <label className="flex items-center gap-2">
                           <input
@@ -368,7 +372,7 @@ export default function HomePage() {
                               setCustomer({ ...customer, invoice_method: event.target.value })
                             }
                           />
-                          E-post
+                          {t.bookingFlow.invoiceEmail}
                         </label>
                       </div>
                     </div>
@@ -391,7 +395,7 @@ export default function HomePage() {
                     <p>{pricePreview.days} {t.labels.daysLabel}</p>
                     <p>{t.labels.deliveryFee}: {pricePreview.deliveryFee} kr</p>
                     <p>{t.labels.pickupFee}: {pricePreview.pickupFee} kr</p>
-                    <p>Inkludert km: {pricePreview.days * 200} km</p>
+                    <p>{t.bookingFlow.includedKm}: {pricePreview.days * 200} km</p>
                     <p className="mt-2 text-lg font-semibold">{t.labels.priceTotal}: {pricePreview.total} kr</p>
                   </div>
                 )}
@@ -400,39 +404,33 @@ export default function HomePage() {
 
             {step === 5 && (
               <div className="mt-4 space-y-4 text-sm">
-                <p className="font-semibold">Leiekontrakt</p>
+                <p className="font-semibold">{t.contract.title}</p>
                 <div className="rounded-2xl bg-white/70 p-6 text-sm">
-                  <p>Kontrakten er inngatt mellom Astafjord bilutleie (tlf +47 45658315) og:</p>
-                  <p>Navn: {customer.first_name} {customer.last_name}</p>
-                  <p>E-post: {customer.email}</p>
-                  <p>Telefon: {customer.phone}</p>
-                  <p>Hentested: {selectedPickup?.name || "-"}</p>
-                  <p>Leveringssted: {selectedDelivery?.name || "-"}</p>
-                  <p>Startdato og tid: {startDate || "-"} kl. {startTime}</p>
-                  <p>Sluttdato og tid: {endDate || "-"} kl. {endTime}</p>
-                  <p>Leieperiode: {pricePreview?.days || "-"} dager</p>
-                  <p className="mt-2 text-lg font-semibold">Totalpris: {pricePreview?.total || "-"} NOK</p>
-                  <p>Gratis km per dag: 200 km</p>
-                  <p>Etter dette koster det: NOK 2,50/km</p>
-                  <p>I leieperioden og til bilen er returnert, har leietaker fullt ansvar for bilen og bruken av den.</p>
+                  <p>{t.contract.intro}</p>
+                  <p>{t.contract.name}: {customer.first_name} {customer.last_name}</p>
+                  <p>{t.contract.email}: {customer.email}</p>
+                  <p>{t.contract.phone}: {customer.phone}</p>
+                  <p>{t.contract.pickup}: {selectedPickup?.name || "-"}</p>
+                  <p>{t.contract.delivery}: {selectedDelivery?.name || "-"}</p>
+                  <p>{t.contract.start}: {startDate || "-"} {t.contract.timePrefix} {startTime}</p>
+                  <p>{t.contract.end}: {endDate || "-"} {t.contract.timePrefix} {endTime}</p>
+                  <p>{t.contract.period}: {pricePreview?.days || "-"} {t.labels.daysLabel}</p>
+                  <p className="mt-2 text-lg font-semibold">{t.contract.total}: {pricePreview?.total || "-"} NOK</p>
+                  <p>{t.contract.freeKm}: 200 km</p>
+                  <p>{t.contract.extraKm}</p>
+                  <p>{t.contract.responsibility}</p>
                 </div>
                 <div className="rounded-2xl bg-white/70 p-4 text-xs">
-                  <p>Leietaker plikter a betale folgende:</p>
-                  <p>Leiens pris som avtalt. Det vil komme tillegg pa kr 2,50/km nar kjorlengden overstiger avtalt fri kjorelende (200 km/dogn).</p>
-                  <p>Leien faktureres forskuddsvis og skal vaere betalt for henting. Dersom kontrakt skrives samme dag, ma betaling skje med kort for henting.</p>
-                  <p>Drivstoff ma etterfylles (tanken skal vaere full ved henting og levering). Mangelfull drivstoff etterfaktureres med 27kr/liter. Drivstofftype: {selectedCar?.fuel || "-"}.</p>
-                  <p>Alle kostnader for bompenger, parkeringsgebyr og fartsboter (etterfaktureres).</p>
-                  <p>Enhver skade pa kjoretoyet i leieperioden, inkludert haerverk og tyveri, opptil en egenandel (dekkes ofte av reiseforsikring) pa: 12 000 NOK.</p>
-                  <p>Leietaker ma inspisere bilen ved henting og notere eventuelle skader. Bor ta bilder av bilen ved mottak.</p>
-                  <p>Leietaker er ansvarlig for vedlikehold (olje, kjolevaeske, dekktrykk). Kontakt utleier ved tvil.</p>
-                  <p className="mt-2">Bruksvilkar</p>
-                  <p>Leietaker ma ikke:</p>
-                  <p>Kjore uten nodvendige tillatelser.</p>
-                  <p>Ta bilen ut av landet uten skriftlig tillatelse.</p>
-                  <p>Transportere passasjerer mot betaling.</p>
-                  <p>Fylle feil drivstoff. Drivstofftype: {selectedCar?.fuel || "-"}.</p>
-                  <p>Kjore utenfor offentlig vei.</p>
-                  <p className="mt-2">Ved a trykke godkjenn, godkjenner du leiekontrakten.</p>
+                  <p>{t.contract.obligationsTitle}</p>
+                  {t.contract.obligations.map((line) => (
+                    <p key={line}>
+                      {line}{line.toLowerCase().includes("drivstoff") || line.toLowerCase().includes("fuel") ? ` ${t.labels.fuelType}: ${selectedCar?.fuel || "-"}.` : ""}
+                    </p>
+                  ))}
+                  <p className="mt-2">{t.contract.termsTitle}</p>
+                  {t.contract.terms.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
                 </div>
                 <label className="flex items-center gap-2 text-sm">
                   <input
@@ -440,14 +438,14 @@ export default function HomePage() {
                     checked={termsAccepted}
                     onChange={(event) => setTermsAccepted(event.target.checked)}
                   />
-                  Jeg godkjenner leiekontrakten
+                  {t.contract.approve}
                 </label>
                 <button
                   onClick={submitBooking}
                   disabled={loading || (selectedCar && unavailableCars.includes(selectedCar.id))}
                   className="mt-2 w-full rounded-full bg-ink px-4 py-3 text-sm uppercase tracking-wide text-white disabled:cursor-not-allowed disabled:bg-ink/40"
                 >
-                  {loading ? "Sender..." : "Send bestilling"}
+                  {loading ? t.bookingFlow.sending : t.bookingFlow.send}
                 </button>
               </div>
             )}
@@ -459,7 +457,7 @@ export default function HomePage() {
                 disabled={step === 1}
                 className="rounded-full border border-ink/20 px-4 py-2 disabled:opacity-40"
               >
-                Tilbake
+                {t.bookingFlow.back}
               </button>
               {step < 5 && (
                 <button
@@ -467,7 +465,7 @@ export default function HomePage() {
                   onClick={nextStep}
                   className="rounded-full bg-ink px-4 py-2 text-white"
                 >
-                  Videre
+                  {t.bookingFlow.next}
                 </button>
               )}
             </div>
@@ -480,10 +478,8 @@ export default function HomePage() {
             {t.hero.subtitle && <p className="mt-3 text-ink/70">{t.hero.subtitle}</p>}
           </div>
           <div className="mb-6 rounded-2xl bg-white/60 p-4 text-sm text-ink/70">
-            <p className="font-medium text-ink">Lokasjoner for bilutleie</p>
-            <p className="mt-2">
-              Lavangen, Salangen, Gratangen, Dyrøy, Ibestad, Setermoen, Evenes Airport, Narvik, Bjerkvik og Bardufoss Airport.
-            </p>
+            <p className="font-medium text-ink">{t.locations.title}</p>
+            <p className="mt-2">{t.locations.list}</p>
           </div>
           {step < 5 && (
             <div className="grid gap-6 md:grid-cols-2">
