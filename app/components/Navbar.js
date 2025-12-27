@@ -45,6 +45,8 @@ export default function Navbar() {
         </Link>
         <div className="flex items-center gap-4 text-sm">
           <Link href="/" className="hover:text-tide">{t.nav.home}</Link>
+          <Link href="/about" className="hover:text-tide">{t.nav.about}</Link>
+          <Link href="/how-to-book" className="hover:text-tide">{t.nav.how}</Link>
           <Link href="/#booking" className="hover:text-tide">{t.nav.booking}</Link>
           <Link href="/admin" className="hover:text-tide">{t.nav.admin}</Link>
           <button

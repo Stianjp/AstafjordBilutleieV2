@@ -1,5 +1,7 @@
 const staticRoutes = [
   "",
+  "/about",
+  "/how-to-book",
   "/login",
   "/admin",
   "/admin/cars",
