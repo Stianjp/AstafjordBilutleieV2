@@ -500,9 +500,9 @@ export default function HomePage() {
       </section>
       <footer className="border-t border-ink/10 bg-white/60 px-6 py-10 text-sm">
         <div className="mx-auto w-full max-w-6xl text-ink/70">
-          <p>Telefon: +47 45658315</p>
-          <p>Har du sporsmal er det bare a ta kontakt med oss e-post: astafjord.bilutleie@gmail.com</p>
-          <p className="mt-4 text-xs uppercase tracking-wide text-ink/50">© 2025 Astafjord Bilutleie</p>
+          <p>{t.footer.phone}</p>
+          <p>{t.footer.contact}</p>
+          <p className="mt-4 text-xs uppercase tracking-wide text-ink/50">{t.footer.copyright}</p>
         </div>
       </footer>
     </main>
