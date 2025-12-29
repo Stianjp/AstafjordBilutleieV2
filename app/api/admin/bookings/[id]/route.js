@@ -97,20 +97,35 @@ export async function PUT(request, { params }) {
     deliveryFee = 0;
   }
 
-  const basePrice = calculateFinalPrice(days, Number(booking.cars.daily_price), Number(booking.cars.monthly_price_cap));
-  const calculatedPrice = payload.calculated_price != null
-    ? Number(payload.calculated_price)
-    : basePrice + deliveryFee + pickupFee;
-
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const bookingEndDate = new Date(payload.end_date || booking.end_date);
   const shouldComplete = payload.end_km != null && bookingEndDate < today;
   const statusUpdate = shouldComplete ? "completed" : booking.status;
 
+  const nextCarId = payload.car_id || booking.car_id;
+  let selectedCar = booking.cars;
+  if (payload.car_id && payload.car_id !== booking.car_id) {
+    const { data: carData, error: carError } = await supabaseService
+      .from("cars")
+      .select("*")
+      .eq("id", payload.car_id)
+      .single();
+    if (carError) {
+      return Response.json({ error: carError.message }, { status: 500 });
+    }
+    selectedCar = carData;
+  }
+
+  const basePrice = calculateFinalPrice(days, Number(selectedCar.daily_price), Number(selectedCar.monthly_price_cap));
+  const calculatedPrice = payload.calculated_price != null
+    ? Number(payload.calculated_price)
+    : basePrice + deliveryFee + pickupFee;
+
   const { data: updated, error: updateError } = await supabaseService
     .from("bookings")
     .update({
+      car_id: nextCarId,
       pickup_location_id: payload.pickup_location_id,
       delivery_location_id: payload.delivery_location_id,
       start_date: payload.start_date,
@@ -136,9 +151,9 @@ export async function PUT(request, { params }) {
 
   if (payload.end_km != null) {
     const nextKm = Number(payload.end_km);
-    const currentKm = Number(booking.cars.current_km || 0);
+    const currentKm = Number(selectedCar.current_km || 0);
     const highestKm = Math.max(currentKm, nextKm);
-    await supabaseService.from("cars").update({ current_km: highestKm }).eq("id", booking.car_id);
+    await supabaseService.from("cars").update({ current_km: highestKm }).eq("id", nextCarId);
   }
 
   return Response.json({ booking: updated });

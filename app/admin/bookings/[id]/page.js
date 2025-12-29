@@ -11,7 +11,9 @@ export default function AdminBookingDetail() {
   const bookingId = params.id;
   const [booking, setBooking] = useState(null);
   const [locations, setLocations] = useState([]);
+  const [cars, setCars] = useState([]);
   const [form, setForm] = useState({
+    car_id: "",
     pickup_location_id: "",
     delivery_location_id: "",
     start_date: "",
@@ -33,17 +35,21 @@ export default function AdminBookingDetail() {
       return;
     }
 
-    const [bookingResponse, locationsResponse] = await Promise.all([
+    const [bookingResponse, locationsResponse, carsResponse] = await Promise.all([
       fetch(`/api/admin/bookings/${bookingId}`, {
         headers: { Authorization: `Bearer ${token}` }
       }),
       fetch("/api/admin/locations", {
+        headers: { Authorization: `Bearer ${token}` }
+      }),
+      fetch("/api/admin/cars", {
         headers: { Authorization: `Bearer ${token}` }
       })
     ]);
 
     const bookingData = await bookingResponse.json();
     const locationData = await locationsResponse.json();
+    const carsData = await carsResponse.json();
     if (!bookingResponse.ok) {
       setMessage(bookingData.error || "Kunne ikke hente booking.");
       return;
@@ -51,7 +57,9 @@ export default function AdminBookingDetail() {
 
     setBooking(bookingData.booking);
     setLocations(locationData.locations || []);
+    setCars(carsData.cars || []);
     setForm({
+      car_id: bookingData.booking.car_id,
       pickup_location_id: bookingData.booking.pickup_location_id,
       delivery_location_id: bookingData.booking.delivery_location_id,
       start_date: bookingData.booking.start_date,
@@ -126,6 +134,19 @@ export default function AdminBookingDetail() {
         {message && <p className="mt-3 text-sm text-coral">{message}</p>}
         <div className="mt-6 grid gap-4">
           <div className="gradient-card rounded-3xl p-6 shadow-card">
+            <label className="text-sm">Bil</label>
+            <select
+              value={form.car_id}
+              onChange={(event) => setForm({ ...form, car_id: event.target.value })}
+              className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+            >
+              <option value="">Velg bil</option>
+              {cars.map((car) => (
+                <option key={car.id} value={car.id}>
+                  {car.model} ({car.reg_number})
+                </option>
+              ))}
+            </select>
             <label className="text-sm">Pickup</label>
             <select
               value={form.pickup_location_id}
