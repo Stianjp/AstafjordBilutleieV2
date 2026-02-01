@@ -20,6 +20,10 @@ export default function AdminBookingDetail() {
     start_time: "",
     end_date: "",
     end_time: "",
+    customer_first_name: "",
+    customer_last_name: "",
+    customer_email: "",
+    customer_phone: "",
     start_km: "",
     end_km: "",
     days: "",
@@ -66,6 +70,10 @@ export default function AdminBookingDetail() {
       start_time: bookingData.booking.start_time || "",
       end_date: bookingData.booking.end_date,
       end_time: bookingData.booking.end_time || "",
+      customer_first_name: bookingData.booking.customers.first_name || "",
+      customer_last_name: bookingData.booking.customers.last_name || "",
+      customer_email: bookingData.booking.customers.email || "",
+      customer_phone: bookingData.booking.customers.phone || "",
       start_km: bookingData.booking.start_km ?? "",
       end_km: bookingData.booking.end_km ?? "",
       days: bookingData.booking.days,
@@ -92,6 +100,12 @@ export default function AdminBookingDetail() {
       },
       body: JSON.stringify({
         ...form,
+        customer: {
+          first_name: form.customer_first_name,
+          last_name: form.customer_last_name,
+          email: form.customer_email,
+          phone: form.customer_phone
+        },
         days: form.days ? Number(form.days) : undefined,
         calculated_price: form.calculated_price ? Number(form.calculated_price) : undefined,
         start_km: form.start_km === "" ? null : Number(form.start_km),
@@ -134,6 +148,40 @@ export default function AdminBookingDetail() {
         {message && <p className="mt-3 text-sm text-coral">{message}</p>}
         <div className="mt-6 grid gap-4">
           <div className="gradient-card rounded-3xl p-6 shadow-card">
+            <div className="mb-4 grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="text-sm">Fornavn</label>
+                <input
+                  value={form.customer_first_name}
+                  onChange={(event) => setForm({ ...form, customer_first_name: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                />
+              </div>
+              <div>
+                <label className="text-sm">Etternavn</label>
+                <input
+                  value={form.customer_last_name}
+                  onChange={(event) => setForm({ ...form, customer_last_name: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                />
+              </div>
+              <div>
+                <label className="text-sm">E-post</label>
+                <input
+                  value={form.customer_email}
+                  onChange={(event) => setForm({ ...form, customer_email: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                />
+              </div>
+              <div>
+                <label className="text-sm">Telefon</label>
+                <input
+                  value={form.customer_phone}
+                  onChange={(event) => setForm({ ...form, customer_phone: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                />
+              </div>
+            </div>
             <label className="text-sm">Bil</label>
             <select
               value={form.car_id}

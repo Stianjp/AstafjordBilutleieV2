@@ -64,7 +64,7 @@ export async function PUT(request, { params }) {
 
   const { data: booking, error: bookingError } = await supabaseService
     .from("bookings")
-    .select("*, cars(*)")
+    .select("*, cars(*), customers(*)")
     .eq("id", params.id)
     .single();
 
@@ -149,6 +149,18 @@ export async function PUT(request, { params }) {
     return Response.json({ error: updateError.message }, { status: 500 });
   }
 
+  if (payload.customer) {
+    await supabaseService
+      .from("customers")
+      .update({
+        first_name: payload.customer.first_name ?? booking.customers?.first_name ?? null,
+        last_name: payload.customer.last_name ?? booking.customers?.last_name ?? null,
+        email: payload.customer.email ?? booking.customers?.email ?? null,
+        phone: payload.customer.phone ?? booking.customers?.phone ?? null
+      })
+      .eq("id", updated.customer_id);
+  }
+
   if (payload.end_km != null) {
     const nextKm = Number(payload.end_km);
     const currentKm = Number(selectedCar.current_km || 0);
@@ -156,7 +168,17 @@ export async function PUT(request, { params }) {
     await supabaseService.from("cars").update({ current_km: highestKm }).eq("id", nextCarId);
   }
 
-  return Response.json({ booking: updated });
+  const { data: refreshed, error: refreshError } = await supabaseService
+    .from("bookings")
+    .select("*, customers(*), cars(*), pickup:pickup_location_id(*), delivery:delivery_location_id(*)")
+    .eq("id", params.id)
+    .single();
+
+  if (refreshError) {
+    return Response.json({ booking: updated });
+  }
+
+  return Response.json({ booking: refreshed });
 }
 
 export async function DELETE(request, { params }) {
