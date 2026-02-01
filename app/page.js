@@ -39,6 +39,7 @@ export default function HomePage() {
   const [discountInfo, setDiscountInfo] = useState(null);
   const [discountMessage, setDiscountMessage] = useState("");
   const [discountLoading, setDiscountLoading] = useState(false);
+  const [showDiscount, setShowDiscount] = useState(false);
 
   useEffect(() => {
     const stored = getLanguageValue(window.localStorage.getItem("lang"));
@@ -437,30 +438,49 @@ export default function HomePage() {
                   </div>
                 )}
                 <div className="rounded-2xl bg-white/70 p-4 text-sm">
-                  <label className="block text-sm">{t.labels.discountCode}</label>
-                  <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                  <label className="flex items-center gap-2 text-sm">
                     <input
-                      value={discountCode}
+                      type="checkbox"
+                      checked={showDiscount}
                       onChange={(event) => {
-                        setDiscountCode(event.target.value);
-                        setDiscountInfo(null);
-                        setDiscountMessage("");
+                        const next = event.target.checked;
+                        setShowDiscount(next);
+                        if (!next) {
+                          setDiscountCode("");
+                          setDiscountInfo(null);
+                          setDiscountMessage("");
+                        }
                       }}
-                      className="w-full rounded-xl border border-ink/20 bg-white/70 p-3 sm:flex-1"
-                      placeholder="SOMMER2026"
                     />
-                    <button
-                      type="button"
-                      onClick={applyDiscountCode}
-                      className="rounded-full border border-ink/20 px-4 py-2 text-xs uppercase tracking-wide"
-                    >
-                      {discountLoading ? "..." : t.labels.discountApply}
-                    </button>
-                  </div>
-                  {discountMessage && (
-                    <p className={`mt-2 text-xs ${discountInfo?.valid ? "text-tide" : "text-coral"}`}>
-                      {discountMessage}
-                    </p>
+                    Har du en rabattkode?
+                  </label>
+                  {showDiscount && (
+                    <div className="mt-3">
+                      <label className="block text-sm">{t.labels.discountCode}</label>
+                      <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                        <input
+                          value={discountCode}
+                          onChange={(event) => {
+                            setDiscountCode(event.target.value);
+                            setDiscountInfo(null);
+                            setDiscountMessage("");
+                          }}
+                          className="w-full rounded-xl border border-ink/20 bg-white/70 p-3 sm:flex-1"
+                        />
+                        <button
+                          type="button"
+                          onClick={applyDiscountCode}
+                          className="rounded-full border border-ink/20 px-4 py-2 text-xs uppercase tracking-wide"
+                        >
+                          {discountLoading ? "..." : t.labels.discountApply}
+                        </button>
+                      </div>
+                      {discountMessage && (
+                        <p className={`mt-2 text-xs ${discountInfo?.valid ? "text-tide" : "text-coral"}`}>
+                          {discountMessage}
+                        </p>
+                      )}
+                    </div>
                   )}
                 </div>
                 {selectedCar && pricePreview && (
