@@ -260,6 +260,11 @@ export default function AdminDashboard() {
                       Kommentar: {booking.customer_comment}
                     </p>
                   )}
+                  {(booking.admin_note_1 || booking.admin_note_2) && (
+                    <p className="text-sm text-ink/80 sm:text-base">
+                      Diverse: {booking.admin_note_1 || "-"}{booking.admin_note_2 ? ` / ${booking.admin_note_2}` : ""}
+                    </p>
+                  )}
                 </div>
                 <div className="text-left md:text-right">
                   <p className="text-lg font-semibold sm:text-xl">{booking.calculated_price} kr</p>
