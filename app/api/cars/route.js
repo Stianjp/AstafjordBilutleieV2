@@ -1,5 +1,8 @@
 import { supabaseService } from "../../../lib/serverSupabase";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET() {
   const { data, error } = await supabaseService
     .from("cars")
@@ -11,5 +14,12 @@ export async function GET() {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
-  return Response.json({ cars: data });
+  return Response.json(
+    { cars: data },
+    {
+      headers: {
+        "Cache-Control": "no-store"
+      }
+    }
+  );
 }

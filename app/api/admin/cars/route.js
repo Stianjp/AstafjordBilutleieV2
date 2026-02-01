@@ -1,6 +1,9 @@
 import { supabaseService } from "../../../../lib/serverSupabase";
 import { getUserFromRequest, isAdminEmail } from "../../../../lib/auth";
 
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export async function GET(request) {
   const { user } = await getUserFromRequest(request);
   if (!user || !isAdminEmail(user.email)) {
@@ -16,7 +19,14 @@ export async function GET(request) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
-  return Response.json({ cars: data });
+  return Response.json(
+    { cars: data },
+    {
+      headers: {
+        "Cache-Control": "no-store"
+      }
+    }
+  );
 }
 
 export async function POST(request) {

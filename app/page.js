@@ -51,8 +51,8 @@ export default function HomePage() {
 
   const loadData = async () => {
     const [carsResponse, locationsResponse] = await Promise.all([
-      fetch("/api/cars"),
-      fetch("/api/locations")
+      fetch("/api/cars", { cache: "no-store" }),
+      fetch("/api/locations", { cache: "no-store" })
     ]);
     const carsData = await carsResponse.json();
     const locationsData = await locationsResponse.json();

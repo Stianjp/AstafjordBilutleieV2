@@ -17,6 +17,25 @@ const statusHelp = {
   completed: "Her er fullforte leieforhold med registrert sluttkm."
 };
 
+const parseDateOnly = (value) => {
+  if (!value) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+};
+
+const startOfToday = () => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return today;
+};
+
+const isSameDate = (left, right) =>
+  !!left && !!right
+  && left.getFullYear() === right.getFullYear()
+  && left.getMonth() === right.getMonth()
+  && left.getDate() === right.getDate();
+
 export default function AdminDashboard() {
   const [status, setStatus] = useState("pending");
   const [bookings, setBookings] = useState([]);
@@ -47,25 +66,37 @@ export default function AdminDashboard() {
     setMessage("");
     let nextBookings = dataResponse.bookings || [];
     if (["active", "future", "past"].includes(selectedStatus)) {
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
+      const today = startOfToday();
       nextBookings = nextBookings.filter((booking) => booking.status === "approved");
       if (selectedStatus === "active") {
         nextBookings = nextBookings.filter((booking) => {
-          const start = new Date(booking.start_date);
-          const end = new Date(booking.end_date);
+          const start = parseDateOnly(booking.start_date);
+          const end = parseDateOnly(booking.end_date);
           return start <= today && end >= today;
         });
       }
       if (selectedStatus === "future") {
-        nextBookings = nextBookings.filter((booking) => new Date(booking.start_date) > today);
+        nextBookings = nextBookings.filter((booking) => {
+          const start = parseDateOnly(booking.start_date);
+          return start > today;
+        });
       }
       if (selectedStatus === "past") {
-        nextBookings = nextBookings.filter((booking) => new Date(booking.end_date) < today);
+        nextBookings = nextBookings.filter((booking) => {
+          const end = parseDateOnly(booking.end_date);
+          return end < today;
+        });
       }
     }
     if (selectedStatus === "completed") {
       nextBookings = nextBookings.filter((booking) => booking.status === "completed");
+    }
+    if (selectedStatus === "future") {
+      nextBookings = nextBookings.slice().sort((a, b) => {
+        const startA = parseDateOnly(a.start_date);
+        const startB = parseDateOnly(b.start_date);
+        return startA - startB;
+      });
     }
     setBookings(nextBookings);
     setKmDrafts((prev) => {
@@ -150,6 +181,15 @@ export default function AdminDashboard() {
     }
 
     setBookings((prev) => prev.map((item) => (item.id === booking.id ? dataResponse.booking : item)));
+    const today = startOfToday();
+    const startDate = parseDateOnly(booking.start_date);
+    const hasStartKm = draft.start_km !== "" && draft.start_km != null;
+    const shouldActivate = status === "future" && hasStartKm && isSameDate(startDate, today);
+    if (shouldActivate) {
+      setStatus("active");
+      loadBookings("active");
+      return;
+    }
     loadBookings();
   };
 
