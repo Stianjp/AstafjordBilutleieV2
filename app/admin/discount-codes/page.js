@@ -14,8 +14,27 @@ const emptyForm = {
   usage_limit: ""
 };
 
+const parseDateOnly = (value) => {
+  if (!value) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+};
+
+const formatDateShort = (value) => {
+  const date = parseDateOnly(value);
+  if (!date) return value || "-";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = date.toLocaleDateString("nb-NO", { month: "long" });
+  const year = String(date.getFullYear());
+  return `${day}.${month} ${year}`;
+};
+
 export default function AdminDiscountCodesPage() {
   const [codes, setCodes] = useState([]);
+  const [codeBookings, setCodeBookings] = useState({});
+  const [openCodeId, setOpenCodeId] = useState(null);
+  const [loadingCodeId, setLoadingCodeId] = useState(null);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [message, setMessage] = useState("");
@@ -110,6 +129,30 @@ export default function AdminDiscountCodesPage() {
     }
   };
 
+  const toggleBookings = async (codeId) => {
+    if (openCodeId === codeId) {
+      setOpenCodeId(null);
+      return;
+    }
+
+    setOpenCodeId(codeId);
+    if (codeBookings[codeId]) return;
+
+    const { data } = await supabase.auth.getSession();
+    const token = data.session?.access_token;
+    if (!token) return;
+
+    setLoadingCodeId(codeId);
+    const response = await fetch(`/api/admin/discount-codes/${codeId}/bookings`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const dataResponse = await response.json();
+    if (response.ok) {
+      setCodeBookings((prev) => ({ ...prev, [codeId]: dataResponse.bookings || [] }));
+    }
+    setLoadingCodeId(null);
+  };
+
   return (
     <main className="min-h-screen">
       <Navbar />
@@ -182,6 +225,7 @@ export default function AdminDiscountCodesPage() {
                   className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
                   placeholder="Ubegrenset"
                 />
+                <p className="mt-2 text-xs text-ink/60">Hvis du ikke skriver inn noe her, vil det være ubegrenset.</p>
               </div>
               <label className="mt-6 flex items-center gap-2 text-sm">
                 <input
@@ -229,7 +273,34 @@ export default function AdminDiscountCodesPage() {
                 <div className="mt-3 flex gap-3 text-xs uppercase tracking-wide">
                   <button className="text-tide" onClick={() => handleEdit(code)}>Rediger</button>
                   <button className="text-coral" onClick={() => handleDelete(code.id)}>Slett</button>
+                  <button className="text-ink/60" onClick={() => toggleBookings(code.id)}>
+                    {openCodeId === code.id ? "Skjul bruk" : "Se bruk"}
+                  </button>
                 </div>
+                {openCodeId === code.id && (
+                  <div className="mt-3 rounded-xl border border-ink/10 bg-white/70 p-3 text-sm">
+                    {loadingCodeId === code.id && <p className="text-xs text-ink/60">Laster...</p>}
+                    {!loadingCodeId && (codeBookings[code.id]?.length ?? 0) === 0 && (
+                      <p className="text-xs text-ink/60">Ingen bookinger med denne koden.</p>
+                    )}
+                    {(codeBookings[code.id] || []).map((booking) => (
+                      <div key={booking.id} className="border-b border-ink/10 py-2 last:border-b-0">
+                        <p className="font-medium">
+                          {booking.customers?.first_name} {booking.customers?.last_name}
+                        </p>
+                        <p className="text-xs text-ink/70">
+                          {booking.cars?.model} • {formatDateShort(booking.start_date)} → {formatDateShort(booking.end_date)}
+                        </p>
+                        <a
+                          className="mt-1 inline-block text-xs uppercase tracking-wide text-ink/60"
+                          href={`/admin/bookings/${booking.id}`}
+                        >
+                          Se mer
+                        </a>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
             {codes.length === 0 && (
