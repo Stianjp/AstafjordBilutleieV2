@@ -42,7 +42,6 @@ export default function Navbar({ showBrand = true }) {
       <nav className="mx-auto flex w-full max-w-6xl items-center justify-between">
         {showBrand ? (
           <Link href="/" className="flex items-center gap-3 font-display text-2xl">
-            <img src="/logo.svg" alt="" className="h-8 w-8" />
             Astafjord Bilutleie
           </Link>
         ) : (
