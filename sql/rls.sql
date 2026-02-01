@@ -4,6 +4,7 @@ alter table bookings enable row level security;
 alter table customers enable row level security;
 alter table mileage_logs enable row level security;
 alter table admins enable row level security;
+alter table discount_codes enable row level security;
 
 create policy "Public can read active cars" on cars
   for select using (active = true);
@@ -21,4 +22,7 @@ create policy "Service role only mileage logs" on mileage_logs
   for all using (auth.role() = 'service_role') with check (auth.role() = 'service_role');
 
 create policy "Service role only admins" on admins
+  for all using (auth.role() = 'service_role') with check (auth.role() = 'service_role');
+
+create policy "Service role only discount codes" on discount_codes
   for all using (auth.role() = 'service_role') with check (auth.role() = 'service_role');

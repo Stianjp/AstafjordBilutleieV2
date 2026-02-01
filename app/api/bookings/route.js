@@ -8,6 +8,64 @@ import {
 } from "../../../lib/pricing";
 import { sendBookingEmails } from "../../../lib/email";
 
+const parseDateOnly = (value) => {
+  if (!value) return null;
+  const [year, month, day] = value.split("-").map(Number);
+  if (!year || !month || !day) return null;
+  return new Date(year, month - 1, day);
+};
+
+const resolveDiscount = async (code, totalBeforeDiscount) => {
+  if (!code) return { discountAmount: 0, discountCode: null, discountCodeId: null };
+  const normalized = code.trim().toUpperCase();
+  if (!normalized) return { discountAmount: 0, discountCode: null, discountCodeId: null };
+
+  const { data: discount, error } = await supabaseService
+    .from("discount_codes")
+    .select("*")
+    .eq("code", normalized)
+    .maybeSingle();
+
+  if (error || !discount) {
+    return { discountAmount: 0, discountCode: null, discountCodeId: null, error: "Ugyldig rabattkode" };
+  }
+
+  if (!discount.active) {
+    return { discountAmount: 0, discountCode: null, discountCodeId: null, error: "Rabattkode er deaktivert" };
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const startsAt = parseDateOnly(discount.starts_at);
+  const endsAt = parseDateOnly(discount.ends_at);
+
+  if (startsAt && startsAt > today) {
+    return { discountAmount: 0, discountCode: null, discountCodeId: null, error: "Rabattkode er ikke aktiv enda" };
+  }
+  if (endsAt && endsAt < today) {
+    return { discountAmount: 0, discountCode: null, discountCodeId: null, error: "Rabattkode er utløpt" };
+  }
+  if (discount.usage_limit != null && discount.used_count >= discount.usage_limit) {
+    return { discountAmount: 0, discountCode: null, discountCodeId: null, error: "Rabattkode er brukt opp" };
+  }
+
+  let discountAmount = 0;
+  if (discount.type === "percent") {
+    discountAmount = (Number(totalBeforeDiscount) * Number(discount.value)) / 100;
+  } else {
+    discountAmount = Number(discount.value);
+  }
+
+  discountAmount = Math.max(0, Math.min(Number(totalBeforeDiscount), discountAmount));
+
+  return {
+    discountAmount,
+    discountCode: discount.code,
+    discountCodeId: discount.id,
+    usedCount: discount.used_count || 0
+  };
+};
+
 export async function POST(request) {
   const payload = await request.json();
 
@@ -102,7 +160,12 @@ export async function POST(request) {
   const dailyPrice = Number(car.daily_price);
   const monthlyCap = Number(car.monthly_price_cap);
   const basePrice = calculateFinalPrice(days, dailyPrice, monthlyCap);
-  const calculatedPrice = basePrice + deliveryFee + pickupFee;
+  const totalBeforeDiscount = basePrice + deliveryFee + pickupFee;
+  const discountResult = await resolveDiscount(payload.discount_code, totalBeforeDiscount);
+  if (discountResult.error) {
+    return Response.json({ error: discountResult.error }, { status: 400 });
+  }
+  const calculatedPrice = totalBeforeDiscount - discountResult.discountAmount;
 
   const { data: existingCustomer } = await supabaseService
     .from("customers")
@@ -169,6 +232,9 @@ export async function POST(request) {
       included_km: calculateIncludedKm(days),
       delivery_fee: deliveryFee,
       pickup_fee: pickupFee,
+      discount_code_id: discountResult.discountCodeId,
+      discount_code: discountResult.discountCode,
+      discount_amount: discountResult.discountAmount,
       calculated_price: calculatedPrice,
       status: "pending",
       terms_accepted: payload.terms_accepted
@@ -187,6 +253,13 @@ export async function POST(request) {
     pickup: pickupLocation,
     delivery: deliveryLocation
   });
+
+  if (discountResult.discountCodeId) {
+    await supabaseService
+      .from("discount_codes")
+      .update({ used_count: discountResult.usedCount + 1 })
+      .eq("id", discountResult.discountCodeId);
+  }
 
   return Response.json({ booking });
 }

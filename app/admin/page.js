@@ -212,17 +212,18 @@ export default function AdminDashboard() {
       <section className="mx-auto w-full max-w-6xl px-6 pb-16 pt-6">
         <h1 className="font-display text-3xl">Admin dashboard</h1>
         <p className="mt-2 text-sm text-ink/70">Godkjenn eller avvis bookingforesporsler.</p>
-        <div className="mt-4 flex flex-wrap gap-3 text-xs uppercase tracking-wide">
-          <a className="rounded-full border border-ink/20 px-4 py-2" href="/admin/cars">Biler</a>
-          <a className="rounded-full border border-ink/20 px-4 py-2" href="/admin/locations">Lokasjoner</a>
-          <a className="rounded-full border border-ink/20 px-4 py-2" href="/admin/mileage">Kjorebok</a>
+        <div className="mt-4 flex flex-wrap gap-3 text-[11px] uppercase tracking-wide sm:text-xs">
+          <a className="rounded-full border border-ink/20 px-4 py-2.5" href="/admin/cars">Biler</a>
+          <a className="rounded-full border border-ink/20 px-4 py-2.5" href="/admin/locations">Lokasjoner</a>
+          <a className="rounded-full border border-ink/20 px-4 py-2.5" href="/admin/discount-codes">Rabattkoder</a>
+          <a className="rounded-full border border-ink/20 px-4 py-2.5" href="/admin/mileage">Kjorebok</a>
         </div>
-        <div className="mt-6 flex flex-wrap gap-3 text-xs uppercase tracking-wide">
+        <div className="mt-6 flex flex-wrap gap-3 text-[11px] uppercase tracking-wide sm:text-xs">
           {statusTabs.map((tab) => (
             <button
               key={tab}
               onClick={() => setStatus(tab)}
-              className={`rounded-full px-4 py-2 ${status === tab ? "bg-ink text-white" : "border border-ink/20"}`}
+              className={`rounded-full px-4 py-2.5 ${status === tab ? "bg-ink text-white" : "border border-ink/20"}`}
             >
               {tab}
             </button>
@@ -233,34 +234,34 @@ export default function AdminDashboard() {
         <div className="mt-6 grid gap-4">
           {bookings.map((booking) => (
             <div key={booking.id} className="gradient-card rounded-2xl p-5 shadow-card">
-              <div className="flex flex-wrap items-start justify-between gap-4">
+              <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
                 <div>
-                  <p className="text-base font-semibold">{booking.cars.model} ({booking.cars.reg_number})</p>
-                  <p className="text-sm text-ink/80">
+                  <p className="text-base font-semibold sm:text-lg">{booking.cars.model} ({booking.cars.reg_number})</p>
+                  <p className="text-sm text-ink/80 sm:text-base">
                     {formatDateShort(booking.start_date)} → {formatDateShort(booking.end_date)} ({booking.days} dager)
                   </p>
-                  <p className="text-sm text-ink/80">
+                  <p className="text-sm text-ink/80 sm:text-base">
                     Kunde: {booking.customers.first_name} {booking.customers.last_name}
                   </p>
-                  <p className="text-sm text-ink/80">
+                  <p className="text-sm text-ink/80 sm:text-base">
                     {booking.customers.email} · {booking.customers.phone}
                   </p>
-                  <p className="text-sm text-ink/80">
+                  <p className="text-sm text-ink/80 sm:text-base">
                     Pickup: {booking.pickup.name} / Levering: {booking.delivery.name}
                   </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-lg font-semibold">{booking.calculated_price} kr</p>
+                <div className="text-left md:text-right">
+                  <p className="text-lg font-semibold sm:text-xl">{booking.calculated_price} kr</p>
                   <a
-                    className="mt-2 block text-xs uppercase tracking-wide text-ink/60"
+                    className="mt-2 block text-[11px] uppercase tracking-wide text-ink/70 sm:text-xs"
                     href={`/admin/bookings/${booking.id}`}
                   >
                     Rediger
                   </a>
                   {["active", "future", "past"].includes(status) && (
-                    <div className="mt-3 rounded-2xl border border-ink/10 bg-white/60 p-3 text-xs">
+                    <div className="mt-3 rounded-2xl border border-ink/10 bg-white/60 p-3 text-[11px] sm:text-xs">
                       <p className="uppercase tracking-wide text-ink/50">Kilometer</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
+                      <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                         <input
                           type="number"
                           placeholder="Start km"
@@ -271,7 +272,7 @@ export default function AdminDashboard() {
                               [booking.id]: { ...prev[booking.id], start_km: event.target.value }
                             }))
                           }
-                          className="w-24 rounded-lg border border-ink/20 bg-white/80 p-2"
+                          className="w-full rounded-lg border border-ink/20 bg-white/80 p-2 sm:w-24"
                         />
                         <input
                           type="number"
@@ -283,10 +284,10 @@ export default function AdminDashboard() {
                               [booking.id]: { ...prev[booking.id], end_km: event.target.value }
                             }))
                           }
-                          className="w-24 rounded-lg border border-ink/20 bg-white/80 p-2"
+                          className="w-full rounded-lg border border-ink/20 bg-white/80 p-2 sm:w-24"
                         />
                         <button
-                          className="rounded-full border border-ink/20 px-3 py-1 text-[10px] uppercase tracking-wide"
+                          className="rounded-full border border-ink/20 px-4 py-2 text-[11px] uppercase tracking-wide sm:text-[10px]"
                           onClick={() => saveKm(booking)}
                         >
                           Lagre km
@@ -295,7 +296,7 @@ export default function AdminDashboard() {
                     </div>
                   )}
                   {status === "pending" && (
-                    <div className="mt-2 flex gap-2 text-xs uppercase tracking-wide">
+                    <div className="mt-2 flex flex-wrap gap-2 text-[11px] uppercase tracking-wide sm:text-xs">
                       <button
                         className="text-tide"
                         onClick={() => updateStatus(booking.id, "approved")}
@@ -318,7 +319,7 @@ export default function AdminDashboard() {
                   )}
                   {status === "approved" && (
                     <button
-                      className="mt-2 text-xs uppercase tracking-wide text-ink/60"
+                      className="mt-2 text-[11px] uppercase tracking-wide text-ink/70 sm:text-xs"
                       onClick={() => updateStatus(booking.id, "cancelled")}
                     >
                       Kanseller
@@ -326,7 +327,7 @@ export default function AdminDashboard() {
                   )}
                   {status === "rejected" && (
                     <button
-                      className="mt-2 text-xs uppercase tracking-wide text-coral"
+                      className="mt-2 text-[11px] uppercase tracking-wide text-coral sm:text-xs"
                       onClick={() => deleteBooking(booking.id)}
                     >
                       Slett
@@ -334,7 +335,7 @@ export default function AdminDashboard() {
                   )}
                   {status === "cancelled" && (
                     <button
-                      className="mt-2 text-xs uppercase tracking-wide text-coral"
+                      className="mt-2 text-[11px] uppercase tracking-wide text-coral sm:text-xs"
                       onClick={() => deleteBooking(booking.id)}
                     >
                       Slett

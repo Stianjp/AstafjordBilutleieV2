@@ -50,9 +50,25 @@ create table if not exists bookings (
   end_km numeric,
   delivery_fee numeric not null,
   pickup_fee numeric not null,
+  discount_code_id uuid references discount_codes(id),
+  discount_code text,
+  discount_amount numeric not null default 0,
   calculated_price numeric not null,
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected', 'cancelled', 'completed')),
   terms_accepted boolean not null default false
+);
+
+create table if not exists discount_codes (
+  id uuid primary key default uuid_generate_v4(),
+  code text not null unique,
+  type text not null check (type in ('percent', 'amount')),
+  value numeric not null,
+  active boolean not null default true,
+  starts_at date,
+  ends_at date,
+  usage_limit integer,
+  used_count integer not null default 0,
+  created_at timestamp with time zone default now()
 );
 
 create table if not exists mileage_logs (

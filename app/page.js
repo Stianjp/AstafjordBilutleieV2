@@ -35,6 +35,10 @@ export default function HomePage() {
   const [language, setLanguage] = useState("no");
   const [unavailableCars, setUnavailableCars] = useState([]);
   const [step, setStep] = useState(1);
+  const [discountCode, setDiscountCode] = useState("");
+  const [discountInfo, setDiscountInfo] = useState(null);
+  const [discountMessage, setDiscountMessage] = useState("");
+  const [discountLoading, setDiscountLoading] = useState(false);
 
   useEffect(() => {
     const stored = getLanguageValue(window.localStorage.getItem("lang"));
@@ -91,13 +95,26 @@ export default function HomePage() {
     const basePrice = calculateFinalPrice(days, selectedCar.daily_price, selectedCar.monthly_price_cap);
     const { deliveryFee, pickupFee } = calculateFees(selectedPickup, selectedDelivery);
     const deliveryZero = selectedCar.current_location_id === selectedPickup.id ? 0 : deliveryFee;
+    const totalBeforeDiscount = basePrice + deliveryZero + pickupFee;
+    let discountAmount = 0;
+    if (discountInfo?.valid) {
+      if (discountInfo.type === "percent") {
+        discountAmount = (totalBeforeDiscount * Number(discountInfo.value)) / 100;
+      } else {
+        discountAmount = Number(discountInfo.value);
+      }
+      discountAmount = Math.max(0, Math.min(totalBeforeDiscount, discountAmount));
+    }
+
     return {
       days,
-      total: basePrice + deliveryZero + pickupFee,
+      totalBeforeDiscount,
+      discountAmount,
+      total: totalBeforeDiscount - discountAmount,
       deliveryFee: deliveryZero,
       pickupFee
     };
-  }, [selectedCar, startDate, endDate, selectedPickup, selectedDelivery]);
+  }, [selectedCar, startDate, endDate, selectedPickup, selectedDelivery, discountInfo]);
 
   const availableCars = useMemo(() => {
     if (!startDate || !endDate) return cars.filter((car) => car.active);
@@ -163,6 +180,7 @@ export default function HomePage() {
         end_date: endDate,
         end_time: endTime,
         terms_accepted: termsAccepted,
+        discount_code: discountInfo?.valid ? discountInfo.code : null,
         customer
       })
     });
@@ -182,6 +200,32 @@ export default function HomePage() {
       setStep(1);
     }
     setLoading(false);
+  };
+
+  const applyDiscountCode = async () => {
+    const code = discountCode.trim();
+    if (!code) {
+      setDiscountInfo(null);
+      setDiscountMessage(t.labels.discountInvalid);
+      return;
+    }
+    setDiscountLoading(true);
+    setDiscountMessage("");
+    try {
+      const response = await fetch(`/api/discount-codes?code=${encodeURIComponent(code)}`, { cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok || !data.valid) {
+        setDiscountInfo(null);
+        setDiscountMessage(data.message || t.labels.discountInvalid);
+      } else {
+        setDiscountInfo(data);
+        setDiscountMessage(t.labels.discountApplied);
+      }
+    } catch {
+      setDiscountInfo(null);
+      setDiscountMessage(t.labels.discountInvalid);
+    }
+    setDiscountLoading(false);
   };
 
   return (
@@ -296,6 +340,9 @@ export default function HomePage() {
                     <p>{t.labels.deliveryFee}: {pricePreview.deliveryFee} kr</p>
                     <p>{t.labels.pickupFee}: {pricePreview.pickupFee} kr</p>
                     <p>{t.bookingFlow.includedKm}: {pricePreview.days * 200} km</p>
+                    {pricePreview.discountAmount > 0 && (
+                      <p>{t.labels.discountLabel}: -{Math.round(pricePreview.discountAmount)} kr</p>
+                    )}
                     <p className="mt-2 text-lg font-semibold">{t.labels.priceTotal}: {pricePreview.total} kr</p>
                   </div>
                 )}
@@ -389,6 +436,33 @@ export default function HomePage() {
                     )}
                   </div>
                 )}
+                <div className="rounded-2xl bg-white/70 p-4 text-sm">
+                  <label className="block text-sm">{t.labels.discountCode}</label>
+                  <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+                    <input
+                      value={discountCode}
+                      onChange={(event) => {
+                        setDiscountCode(event.target.value);
+                        setDiscountInfo(null);
+                        setDiscountMessage("");
+                      }}
+                      className="w-full rounded-xl border border-ink/20 bg-white/70 p-3 sm:flex-1"
+                      placeholder="SOMMER2026"
+                    />
+                    <button
+                      type="button"
+                      onClick={applyDiscountCode}
+                      className="rounded-full border border-ink/20 px-4 py-2 text-xs uppercase tracking-wide"
+                    >
+                      {discountLoading ? "..." : t.labels.discountApply}
+                    </button>
+                  </div>
+                  {discountMessage && (
+                    <p className={`mt-2 text-xs ${discountInfo?.valid ? "text-tide" : "text-coral"}`}>
+                      {discountMessage}
+                    </p>
+                  )}
+                </div>
                 {selectedCar && pricePreview && (
                   <div className="rounded-2xl bg-white/70 p-4 text-sm">
                     <p className="font-medium">{selectedCar.model}</p>
@@ -396,6 +470,9 @@ export default function HomePage() {
                     <p>{t.labels.deliveryFee}: {pricePreview.deliveryFee} kr</p>
                     <p>{t.labels.pickupFee}: {pricePreview.pickupFee} kr</p>
                     <p>{t.bookingFlow.includedKm}: {pricePreview.days * 200} km</p>
+                    {pricePreview.discountAmount > 0 && (
+                      <p>{t.labels.discountLabel}: -{Math.round(pricePreview.discountAmount)} kr</p>
+                    )}
                     <p className="mt-2 text-lg font-semibold">{t.labels.priceTotal}: {pricePreview.total} kr</p>
                   </div>
                 )}
@@ -415,6 +492,9 @@ export default function HomePage() {
                   <p>{t.contract.start}: {startDate || "-"} {t.contract.timePrefix} {startTime}</p>
                   <p>{t.contract.end}: {endDate || "-"} {t.contract.timePrefix} {endTime}</p>
                   <p>{t.contract.period}: {pricePreview?.days || "-"} {t.labels.daysLabel}</p>
+                  {pricePreview?.discountAmount > 0 && (
+                    <p>{t.labels.discountLabel}: -{Math.round(pricePreview.discountAmount)} NOK</p>
+                  )}
                   <p className="mt-2 text-lg font-semibold">{t.contract.total}: {pricePreview?.total || "-"} NOK</p>
                   <p>{t.contract.freeKm}: 200 km</p>
                   <p>{t.contract.extraKm}</p>
