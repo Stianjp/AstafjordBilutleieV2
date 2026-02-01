@@ -235,17 +235,17 @@ export default function AdminDashboard() {
             <div key={booking.id} className="gradient-card rounded-2xl p-5 shadow-card">
               <div className="flex flex-wrap items-start justify-between gap-4">
                 <div>
-                  <p className="font-medium">{booking.cars.model} ({booking.cars.reg_number})</p>
-                  <p className="text-sm text-ink/60">
+                  <p className="text-base font-semibold">{booking.cars.model} ({booking.cars.reg_number})</p>
+                  <p className="text-sm text-ink/80">
                     {formatDateShort(booking.start_date)} → {formatDateShort(booking.end_date)} ({booking.days} dager)
                   </p>
-                  <p className="text-sm text-ink/60">
+                  <p className="text-sm text-ink/80">
                     Kunde: {booking.customers.first_name} {booking.customers.last_name}
                   </p>
-                  <p className="text-sm text-ink/60">
+                  <p className="text-sm text-ink/80">
                     {booking.customers.email} · {booking.customers.phone}
                   </p>
-                  <p className="text-sm text-ink/60">
+                  <p className="text-sm text-ink/80">
                     Pickup: {booking.pickup.name} / Levering: {booking.delivery.name}
                   </p>
                 </div>
