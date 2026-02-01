@@ -36,6 +36,15 @@ const isSameDate = (left, right) =>
   && left.getMonth() === right.getMonth()
   && left.getDate() === right.getDate();
 
+const formatDateShort = (value) => {
+  const date = parseDateOnly(value);
+  if (!date) return value || "-";
+  const day = String(date.getDate()).padStart(2, "0");
+  const month = date.toLocaleDateString("nb-NO", { month: "long" });
+  const year = String(date.getFullYear());
+  return `${day}.${month} ${year}`;
+};
+
 export default function AdminDashboard() {
   const [status, setStatus] = useState("pending");
   const [bookings, setBookings] = useState([]);
@@ -228,10 +237,13 @@ export default function AdminDashboard() {
                 <div>
                   <p className="font-medium">{booking.cars.model} ({booking.cars.reg_number})</p>
                   <p className="text-sm text-ink/60">
-                    {booking.start_date} → {booking.end_date} ({booking.days} dager)
+                    {formatDateShort(booking.start_date)} → {formatDateShort(booking.end_date)} ({booking.days} dager)
                   </p>
                   <p className="text-sm text-ink/60">
                     Kunde: {booking.customers.first_name} {booking.customers.last_name}
+                  </p>
+                  <p className="text-sm text-ink/60">
+                    {booking.customers.email} · {booking.customers.phone}
                   </p>
                   <p className="text-sm text-ink/60">
                     Pickup: {booking.pickup.name} / Levering: {booking.delivery.name}
