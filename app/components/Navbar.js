@@ -5,7 +5,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "../../lib/supabaseClient";
 import { translations, getLanguageValue } from "../../lib/i18n";
 
-export default function Navbar() {
+export default function Navbar({ showBrand = true }) {
   const [session, setSession] = useState(null);
   const [language, setLanguage] = useState("no");
 
@@ -40,9 +40,14 @@ export default function Navbar() {
   return (
     <header className="px-6 py-5">
       <nav className="mx-auto flex w-full max-w-6xl items-center justify-between">
-        <Link href="/" className="font-display text-2xl">
-          Astafjord Bilutleie
-        </Link>
+        {showBrand ? (
+          <Link href="/" className="flex items-center gap-3 font-display text-2xl">
+            <img src="/logo.svg" alt="" className="h-8 w-8" />
+            Astafjord Bilutleie
+          </Link>
+        ) : (
+          <div aria-hidden className="h-8 w-40" />
+        )}
         <div className="flex items-center gap-4 text-sm">
           <Link href="/" className="hover:text-tide">{t.nav.home}</Link>
           <Link href="/about" className="hover:text-tide">{t.nav.about}</Link>

@@ -473,10 +473,11 @@ export default function HomePage() {
         </aside>
 
         <div className="order-2 lg:order-1">
-          <div className="mb-6">
-            <h1 className="font-display text-4xl sm:text-5xl">{t.hero.title}</h1>
-            {t.hero.subtitle && <p className="mt-3 text-ink/70">{t.hero.subtitle}</p>}
-          </div>
+          {t.hero.subtitle && (
+            <div className="mb-6">
+              <p className="text-lg text-ink/70">{t.hero.subtitle}</p>
+            </div>
+          )}
           <div className="mb-6 rounded-2xl bg-white/60 p-4 text-sm text-ink/70">
             <p className="font-medium text-ink">{t.locations.title}</p>
             <p className="mt-2">{t.locations.list}</p>
