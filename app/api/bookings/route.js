@@ -68,6 +68,8 @@ const resolveDiscount = async (code, totalBeforeDiscount) => {
 
 export async function POST(request) {
   const payload = await request.json();
+  const childSeatRequired = payload.child_seat_required === true;
+  const childSeatFee = childSeatRequired ? 300 : 0;
 
   const requiredFields = [
     "car_id",
@@ -165,7 +167,7 @@ export async function POST(request) {
   if (discountResult.error) {
     return Response.json({ error: discountResult.error }, { status: 400 });
   }
-  const calculatedPrice = totalBeforeDiscount - discountResult.discountAmount;
+  const calculatedPrice = totalBeforeDiscount - discountResult.discountAmount + childSeatFee;
 
   const { data: existingCustomer } = await supabaseService
     .from("customers")
@@ -232,6 +234,9 @@ export async function POST(request) {
       included_km: calculateIncludedKm(days),
       delivery_fee: deliveryFee,
       pickup_fee: pickupFee,
+      child_seat_required: childSeatRequired,
+      child_seat_fee: childSeatFee,
+      customer_comment: payload.customer_comment || null,
       discount_code_id: discountResult.discountCodeId,
       discount_code: discountResult.discountCode,
       discount_amount: discountResult.discountAmount,

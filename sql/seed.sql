@@ -33,3 +33,8 @@ from (values
   ('AY21371', 'Opel Mokka', '/Mokka.png', 5, 'Manual', 'Petrol', 800, 12000, 76000)
 ) as seed(reg_number, model, image_url, seats, transmission, fuel, daily_price, monthly_price_cap, current_km)
 on conflict (reg_number) do nothing;
+
+insert into add_ons (key, name, fee, active)
+values
+  ('child_seat', 'Barnestol 3 mnd - 4 år (maks 18 kg)', 300, true)
+on conflict (key) do nothing;

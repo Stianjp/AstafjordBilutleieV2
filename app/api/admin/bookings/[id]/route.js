@@ -118,9 +118,13 @@ export async function PUT(request, { params }) {
   }
 
   const basePrice = calculateFinalPrice(days, Number(selectedCar.daily_price), Number(selectedCar.monthly_price_cap));
+  const nextChildSeatRequired = payload.child_seat_required ?? booking.child_seat_required ?? false;
+  const nextChildSeatFee = nextChildSeatRequired
+    ? Number(payload.child_seat_fee ?? booking.child_seat_fee ?? 300)
+    : 0;
   const calculatedPrice = payload.calculated_price != null
     ? Number(payload.calculated_price)
-    : basePrice + deliveryFee + pickupFee;
+    : basePrice + deliveryFee + pickupFee + nextChildSeatFee;
 
   const { data: updated, error: updateError } = await supabaseService
     .from("bookings")
@@ -137,6 +141,11 @@ export async function PUT(request, { params }) {
       delivery_fee: deliveryFee,
       pickup_fee: pickupFee,
       calculated_price: calculatedPrice,
+      customer_comment: payload.customer_comment ?? booking.customer_comment ?? null,
+      child_seat_required: nextChildSeatRequired,
+      child_seat_fee: nextChildSeatFee,
+      admin_note_1: payload.admin_note_1 ?? booking.admin_note_1 ?? null,
+      admin_note_2: payload.admin_note_2 ?? booking.admin_note_2 ?? null,
       start_km: payload.start_km ?? booking.start_km ?? null,
       end_km: payload.end_km ?? booking.end_km ?? null,
       status: statusUpdate

@@ -24,6 +24,11 @@ export default function AdminBookingDetail() {
     customer_last_name: "",
     customer_email: "",
     customer_phone: "",
+    customer_comment: "",
+    child_seat_required: false,
+    child_seat_fee: 300,
+    admin_note_1: "",
+    admin_note_2: "",
     start_km: "",
     end_km: "",
     days: "",
@@ -74,6 +79,11 @@ export default function AdminBookingDetail() {
       customer_last_name: bookingData.booking.customers.last_name || "",
       customer_email: bookingData.booking.customers.email || "",
       customer_phone: bookingData.booking.customers.phone || "",
+      customer_comment: bookingData.booking.customer_comment || "",
+      child_seat_required: bookingData.booking.child_seat_required || false,
+      child_seat_fee: bookingData.booking.child_seat_fee ?? 300,
+      admin_note_1: bookingData.booking.admin_note_1 || "",
+      admin_note_2: bookingData.booking.admin_note_2 || "",
       start_km: bookingData.booking.start_km ?? "",
       end_km: bookingData.booking.end_km ?? "",
       days: bookingData.booking.days,
@@ -106,6 +116,11 @@ export default function AdminBookingDetail() {
           email: form.customer_email,
           phone: form.customer_phone
         },
+        customer_comment: form.customer_comment,
+        child_seat_required: form.child_seat_required,
+        child_seat_fee: form.child_seat_required ? Number(form.child_seat_fee || 300) : 0,
+        admin_note_1: form.admin_note_1,
+        admin_note_2: form.admin_note_2,
         days: form.days ? Number(form.days) : undefined,
         calculated_price: form.calculated_price ? Number(form.calculated_price) : undefined,
         start_km: form.start_km === "" ? null : Number(form.start_km),
@@ -180,6 +195,56 @@ export default function AdminBookingDetail() {
                   onChange={(event) => setForm({ ...form, customer_phone: event.target.value })}
                   className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
                 />
+              </div>
+            </div>
+            <div className="mb-4 grid gap-3 sm:grid-cols-2">
+              <div>
+                <label className="text-sm">Kommentar (kunde)</label>
+                <textarea
+                  value={form.customer_comment}
+                  onChange={(event) => setForm({ ...form, customer_comment: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                  rows={3}
+                />
+              </div>
+              <div className="grid gap-3">
+                <label className="mt-1 flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={form.child_seat_required}
+                    onChange={(event) =>
+                      setForm({ ...form, child_seat_required: event.target.checked })
+                    }
+                  />
+                  Barnestol 3 mnd - 4 år (maks 18 kg)
+                </label>
+                {form.child_seat_required && (
+                  <div>
+                    <label className="text-sm">Barnestol (tillegg)</label>
+                    <input
+                      type="number"
+                      value={form.child_seat_fee}
+                      onChange={(event) => setForm({ ...form, child_seat_fee: event.target.value })}
+                      className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                    />
+                  </div>
+                )}
+                <div>
+                  <label className="text-sm">Diverse 1</label>
+                  <input
+                    value={form.admin_note_1}
+                    onChange={(event) => setForm({ ...form, admin_note_1: event.target.value })}
+                    className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                  />
+                </div>
+                <div>
+                  <label className="text-sm">Diverse 2</label>
+                  <input
+                    value={form.admin_note_2}
+                    onChange={(event) => setForm({ ...form, admin_note_2: event.target.value })}
+                    className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                  />
+                </div>
               </div>
             </div>
             <label className="text-sm">Bil</label>

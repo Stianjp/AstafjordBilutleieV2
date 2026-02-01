@@ -53,6 +53,11 @@ create table if not exists bookings (
   discount_code_id uuid references discount_codes(id),
   discount_code text,
   discount_amount numeric not null default 0,
+  customer_comment text,
+  child_seat_required boolean not null default false,
+  child_seat_fee numeric not null default 0,
+  admin_note_1 text,
+  admin_note_2 text,
   calculated_price numeric not null,
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected', 'cancelled', 'completed')),
   terms_accepted boolean not null default false
@@ -68,6 +73,15 @@ create table if not exists discount_codes (
   ends_at date,
   usage_limit integer,
   used_count integer not null default 0,
+  created_at timestamp with time zone default now()
+);
+
+create table if not exists add_ons (
+  id uuid primary key default uuid_generate_v4(),
+  key text not null unique,
+  name text not null,
+  fee numeric not null default 0,
+  active boolean not null default true,
   created_at timestamp with time zone default now()
 );
 

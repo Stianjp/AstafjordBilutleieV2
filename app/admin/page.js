@@ -215,6 +215,7 @@ export default function AdminDashboard() {
         <div className="mt-4 flex flex-wrap gap-3 text-[11px] uppercase tracking-wide sm:text-xs">
           <a className="rounded-full border border-ink/20 px-4 py-2.5" href="/admin/cars">Biler</a>
           <a className="rounded-full border border-ink/20 px-4 py-2.5" href="/admin/locations">Lokasjoner</a>
+          <a className="rounded-full border border-ink/20 px-4 py-2.5" href="/admin/add-ons">Tilleggsutstyr</a>
           <a className="rounded-full border border-ink/20 px-4 py-2.5" href="/admin/discount-codes">Rabattkoder</a>
           <a className="rounded-full border border-ink/20 px-4 py-2.5" href="/admin/mileage">Kjorebok</a>
         </div>
@@ -249,6 +250,16 @@ export default function AdminDashboard() {
                   <p className="text-sm text-ink/80 sm:text-base">
                     Pickup: {booking.pickup.name} / Levering: {booking.delivery.name}
                   </p>
+                  {booking.child_seat_required && (
+                    <p className="text-sm text-ink/80 sm:text-base">
+                      Barnestol: Ja (+{booking.child_seat_fee != null ? booking.child_seat_fee : 300} kr)
+                    </p>
+                  )}
+                  {booking.customer_comment && (
+                    <p className="text-sm text-ink/80 sm:text-base">
+                      Kommentar: {booking.customer_comment}
+                    </p>
+                  )}
                 </div>
                 <div className="text-left md:text-right">
                   <p className="text-lg font-semibold sm:text-xl">{booking.calculated_price} kr</p>

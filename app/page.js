@@ -40,6 +40,10 @@ export default function HomePage() {
   const [discountMessage, setDiscountMessage] = useState("");
   const [discountLoading, setDiscountLoading] = useState(false);
   const [showDiscount, setShowDiscount] = useState(false);
+  const [showRequest, setShowRequest] = useState(false);
+  const [requestType, setRequestType] = useState("");
+  const [customerComment, setCustomerComment] = useState("");
+  const [childSeatFee, setChildSeatFee] = useState(300);
 
   useEffect(() => {
     const stored = getLanguageValue(window.localStorage.getItem("lang"));
@@ -65,8 +69,24 @@ export default function HomePage() {
     setLocations(locationsData.locations || []);
   };
 
+  const loadAddOns = async () => {
+    try {
+      const response = await fetch("/api/add-ons", { cache: "no-store" });
+      const data = await response.json();
+      if (response.ok) {
+        const childSeat = (data.add_ons || []).find((item) => item.key === "child_seat");
+        if (childSeat?.fee != null) {
+          setChildSeatFee(Number(childSeat.fee));
+        }
+      }
+    } catch {
+      // fallback to default
+    }
+  };
+
   useEffect(() => {
     loadData();
+    loadAddOns();
   }, []);
 
   useEffect(() => {
@@ -106,16 +126,18 @@ export default function HomePage() {
       }
       discountAmount = Math.max(0, Math.min(totalBeforeDiscount, discountAmount));
     }
+    const addOnFee = requestType === "child_seat" ? childSeatFee : 0;
 
     return {
       days,
       totalBeforeDiscount,
       discountAmount,
-      total: totalBeforeDiscount - discountAmount,
+      childSeatFee: addOnFee,
+      total: totalBeforeDiscount - discountAmount + addOnFee,
       deliveryFee: deliveryZero,
       pickupFee
     };
-  }, [selectedCar, startDate, endDate, selectedPickup, selectedDelivery, discountInfo]);
+  }, [selectedCar, startDate, endDate, selectedPickup, selectedDelivery, discountInfo, requestType, childSeatFee]);
 
   const availableCars = useMemo(() => {
     if (!startDate || !endDate) return cars.filter((car) => car.active);
@@ -182,6 +204,9 @@ export default function HomePage() {
         end_time: endTime,
         terms_accepted: termsAccepted,
         discount_code: discountInfo?.valid ? discountInfo.code : null,
+        child_seat_required: requestType === "child_seat",
+        child_seat_fee: requestType === "child_seat" ? childSeatFee : 0,
+        customer_comment: customerComment || null,
         customer
       })
     });
@@ -198,6 +223,14 @@ export default function HomePage() {
       setEndDate("");
       setCustomer(emptyCustomer);
       setTermsAccepted(false);
+      setCustomerComment("");
+      setDiscountCode("");
+      setDiscountInfo(null);
+      setDiscountMessage("");
+      setShowDiscount(false);
+      setShowRequest(false);
+      setRequestType("");
+      setChildSeatFee(300);
       setStep(1);
     }
     setLoading(false);
@@ -341,12 +374,76 @@ export default function HomePage() {
                     <p>{t.labels.deliveryFee}: {pricePreview.deliveryFee} kr</p>
                     <p>{t.labels.pickupFee}: {pricePreview.pickupFee} kr</p>
                     <p>{t.bookingFlow.includedKm}: {pricePreview.days * 200} km</p>
+                    {pricePreview.childSeatFee > 0 && (
+                      <p>{t.labels.childSeatFeeLabel}: {pricePreview.childSeatFee} kr</p>
+                    )}
                     {pricePreview.discountAmount > 0 && (
                       <p>{t.labels.discountLabel}: -{Math.round(pricePreview.discountAmount)} kr</p>
                     )}
                     <p className="mt-2 text-lg font-semibold">{t.labels.priceTotal}: {pricePreview.total} kr</p>
                   </div>
                 )}
+                <div className="rounded-2xl bg-white/70 p-4 text-sm">
+                  <label className="flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={showRequest}
+                      onChange={(event) => {
+                        const next = event.target.checked;
+                        setShowRequest(next);
+                        if (!next) {
+                          setRequestType("");
+                          setCustomerComment("");
+                        }
+                      }}
+                    />
+                    {t.labels.requestToggle}
+                  </label>
+                  {showRequest && (
+                    <div className="mt-3 space-y-3">
+                      <label className="flex items-start gap-2 text-sm">
+                        <input
+                          type="radio"
+                          name="request_type"
+                          value="child_seat"
+                          checked={requestType === "child_seat"}
+                          onChange={(event) => {
+                            setRequestType(event.target.value);
+                            setCustomerComment("");
+                          }}
+                        />
+                        <span>
+                          {t.labels.requestChildSeat}
+                          <span className="block text-xs text-ink/60">
+                            {t.labels.childSeatFeeLabel}: {childSeatFee} kr
+                          </span>
+                        </span>
+                      </label>
+                      <label className="flex items-start gap-2 text-sm">
+                        <input
+                          type="radio"
+                          name="request_type"
+                          value="other"
+                          checked={requestType === "other"}
+                          onChange={(event) => setRequestType(event.target.value)}
+                        />
+                        <span>{t.labels.requestOther}</span>
+                      </label>
+                      {requestType === "other" && (
+                        <div>
+                          <label className="block text-sm">{t.labels.commentLabel}</label>
+                          <textarea
+                            value={customerComment}
+                            onChange={(event) => setCustomerComment(event.target.value)}
+                            className="mt-2 w-full rounded-xl border border-ink/20 bg-white/70 p-3"
+                            rows={3}
+                            placeholder={t.labels.commentHint}
+                          />
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
               </div>
             )}
 
@@ -452,7 +549,7 @@ export default function HomePage() {
                         }
                       }}
                     />
-                    Har du en rabattkode?
+                    {t.labels.discountToggle}
                   </label>
                   {showDiscount && (
                     <div className="mt-3">
@@ -490,6 +587,9 @@ export default function HomePage() {
                     <p>{t.labels.deliveryFee}: {pricePreview.deliveryFee} kr</p>
                     <p>{t.labels.pickupFee}: {pricePreview.pickupFee} kr</p>
                     <p>{t.bookingFlow.includedKm}: {pricePreview.days * 200} km</p>
+                    {pricePreview.childSeatFee > 0 && (
+                      <p>{t.labels.childSeatFeeLabel}: {pricePreview.childSeatFee} kr</p>
+                    )}
                     {pricePreview.discountAmount > 0 && (
                       <p>{t.labels.discountLabel}: -{Math.round(pricePreview.discountAmount)} kr</p>
                     )}
@@ -512,6 +612,12 @@ export default function HomePage() {
                   <p>{t.contract.start}: {startDate || "-"} {t.contract.timePrefix} {startTime}</p>
                   <p>{t.contract.end}: {endDate || "-"} {t.contract.timePrefix} {endTime}</p>
                   <p>{t.contract.period}: {pricePreview?.days || "-"} {t.labels.daysLabel}</p>
+                  {requestType === "child_seat" && (
+                    <p>{t.labels.childSeatLabel}: {t.labels.requestChildSeat} (+{childSeatFee} NOK)</p>
+                  )}
+                  {requestType === "other" && customerComment && (
+                    <p>{t.labels.commentLabel}: {customerComment}</p>
+                  )}
                   {pricePreview?.discountAmount > 0 && (
                     <p>{t.labels.discountLabel}: -{Math.round(pricePreview.discountAmount)} NOK</p>
                   )}

@@ -6,6 +6,7 @@ const staticRoutes = [
   "/admin",
   "/admin/cars",
   "/admin/locations",
+  "/admin/add-ons",
   "/admin/discount-codes",
   "/admin/mileage"
 ];

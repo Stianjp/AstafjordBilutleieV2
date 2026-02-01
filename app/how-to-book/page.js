@@ -44,6 +44,10 @@ export default function HowToBookPage() {
             <p className="text-xs uppercase tracking-wide text-ink/60">{t.howToBook.step4}</p>
             <p className="mt-2 text-lg">{t.howToBook.invoiceAndPickup}</p>
           </div>
+          <div className="gradient-card rounded-3xl p-6 shadow-card">
+            <p className="text-xs uppercase tracking-wide text-ink/60">{t.howToBook.extraLabel}</p>
+            <p className="mt-2 text-lg">{t.howToBook.childSeatInfo}</p>
+          </div>
         </div>
 
         <div className="mt-10 rounded-3xl bg-ink px-6 py-8 text-white">
