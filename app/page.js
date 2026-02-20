@@ -60,6 +60,7 @@ export default function HomePage() {
   }, []);
 
   const t = translations[language];
+  const currentYear = new Date().getFullYear();
 
   const loadData = async () => {
     const [carsResponse, locationsResponse] = await Promise.all([
@@ -800,7 +801,9 @@ export default function HomePage() {
         <div className="mx-auto w-full max-w-6xl text-ink/70">
           <p>{t.footer.phone}</p>
           <p>{t.footer.contact}</p>
-          <p className="mt-4 text-xs uppercase tracking-wide text-ink/50">{t.footer.copyright}</p>
+          <p className="mt-4 text-xs uppercase tracking-wide text-ink/50">
+            {t.footer.copyright.replace("{year}", String(currentYear))}
+          </p>
         </div>
       </footer>
     </main>
