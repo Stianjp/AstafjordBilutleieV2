@@ -452,20 +452,6 @@ export default function HomePage() {
                       <label className="flex items-start gap-2 text-sm">
                         <input
                           type="checkbox"
-                          checked={otherRequestSelected}
-                          onChange={(event) => {
-                            const next = event.target.checked;
-                            setOtherRequestSelected(next);
-                            if (!next) {
-                              setCustomerComment("");
-                            }
-                          }}
-                        />
-                        <span>{t.labels.requestOther}</span>
-                      </label>
-                      <label className="flex items-start gap-2 text-sm">
-                        <input
-                          type="checkbox"
                           checked={deductibleReductionSelected}
                           onChange={(event) => setDeductibleReductionSelected(event.target.checked)}
                         />
@@ -490,6 +476,20 @@ export default function HomePage() {
                           ))}
                         </div>
                       )}
+                      <label className="flex items-start gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={otherRequestSelected}
+                          onChange={(event) => {
+                            const next = event.target.checked;
+                            setOtherRequestSelected(next);
+                            if (!next) {
+                              setCustomerComment("");
+                            }
+                          }}
+                        />
+                        <span>{t.labels.requestOther}</span>
+                      </label>
                       {otherRequestSelected && (
                         <div>
                           <label className="block text-sm">{t.labels.commentLabel}</label>
