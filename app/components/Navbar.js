@@ -2,16 +2,25 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { usePathname } from "next/navigation";
 import { supabase } from "../../lib/supabaseClient";
 import { translations, getLanguageValue } from "../../lib/i18n";
 
 export default function Navbar({ showBrand = true }) {
+  const pathname = usePathname();
   const [session, setSession] = useState(null);
   const [language, setLanguage] = useState("no");
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isAdminHost, setIsAdminHost] = useState(false);
+  const isAdminRoute = pathname === "/login" || pathname?.startsWith("/admin");
+  const isAdminContext = isAdminRoute || isAdminHost;
 
   useEffect(() => {
     let isMounted = true;
+    const currentHost = window.location.hostname.toLowerCase();
+    if (currentHost === "admin.astafjordbilutleie.no") {
+      setIsAdminHost(true);
+    }
     const stored = getLanguageValue(window.localStorage.getItem("lang"));
     setLanguage(stored);
 
@@ -29,7 +38,8 @@ export default function Navbar({ showBrand = true }) {
     };
   }, []);
 
-  const t = translations[language];
+  const activeLanguage = isAdminContext ? "no" : language;
+  const t = translations[activeLanguage];
 
   const toggleLanguage = () => {
     const next = language === "no" ? "en" : "no";
@@ -39,27 +49,32 @@ export default function Navbar({ showBrand = true }) {
   };
 
   return (
-    <header className="px-6 py-5">
+    <header className="border-b border-ink/15 bg-white/60 px-6 py-5 backdrop-blur-sm">
       <nav className="mx-auto flex w-full max-w-6xl items-center justify-between">
         {showBrand ? (
-          <Link href="/" className="flex items-center gap-3 font-display text-2xl">
+          <Link href={isAdminContext ? "/admin" : "/"} className="flex items-center gap-3 font-display text-2xl">
             Astafjord Bilutleie
           </Link>
         ) : (
           <div aria-hidden className="h-8 w-40" />
         )}
         <div className="hidden items-center gap-4 text-sm md:flex">
-          <Link href="/" className="hover:text-tide">{t.nav.home}</Link>
-          <Link href="/about" className="hover:text-tide">{t.nav.about}</Link>
-          <Link href="/how-to-book" className="hover:text-tide">{t.nav.how}</Link>
-          <Link href="/#booking" className="hover:text-tide">{t.nav.booking}</Link>
-          <Link href="/admin" className="hover:text-tide">{t.nav.admin}</Link>
-          <button
-            className="rounded-full border border-ink px-3 py-1 text-[10px] uppercase tracking-[0.2em]"
-            onClick={toggleLanguage}
-          >
-            {language === "no" ? "EN" : "NO"}
-          </button>
+          {isAdminContext ? (
+            <Link href="/admin" className="hover:text-tide">Dashboard</Link>
+          ) : (
+            <>
+              <Link href="/" className="hover:text-tide">{t.nav.home}</Link>
+              <Link href="/about" className="hover:text-tide">{t.nav.about}</Link>
+              <Link href="/how-to-book" className="hover:text-tide">{t.nav.how}</Link>
+              <Link href="/#booking" className="hover:text-tide">{t.nav.booking}</Link>
+              <button
+                className="rounded-full border border-ink px-3 py-1 text-[10px] uppercase tracking-[0.2em]"
+                onClick={toggleLanguage}
+              >
+                {language === "no" ? "EN" : "NO"}
+              </button>
+            </>
+          )}
           {session ? (
             <button
               className="rounded-full border border-ink px-4 py-1 text-xs uppercase tracking-wide"
@@ -86,24 +101,29 @@ export default function Navbar({ showBrand = true }) {
           {menuOpen && (
             <div className="absolute right-0 mt-2 w-48 rounded-2xl border border-ink/10 bg-white/90 p-3 shadow-card">
               <div className="grid gap-2 text-sm">
-                <Link href="/about" className="hover:text-tide" onClick={() => setMenuOpen(false)}>
-                  {t.nav.about}
-                </Link>
-                <Link href="/how-to-book" className="hover:text-tide" onClick={() => setMenuOpen(false)}>
-                  {t.nav.how}
-                </Link>
-                <Link href="/admin" className="hover:text-tide" onClick={() => setMenuOpen(false)}>
-                  {t.nav.admin}
-                </Link>
-                <button
-                  className="text-left hover:text-tide"
-                  onClick={() => {
-                    toggleLanguage();
-                    setMenuOpen(false);
-                  }}
-                >
-                  {language === "no" ? "English" : "Norsk"}
-                </button>
+                {isAdminContext ? (
+                  <Link href="/admin" className="hover:text-tide" onClick={() => setMenuOpen(false)}>
+                    Dashboard
+                  </Link>
+                ) : (
+                  <>
+                    <Link href="/about" className="hover:text-tide" onClick={() => setMenuOpen(false)}>
+                      {t.nav.about}
+                    </Link>
+                    <Link href="/how-to-book" className="hover:text-tide" onClick={() => setMenuOpen(false)}>
+                      {t.nav.how}
+                    </Link>
+                    <button
+                      className="text-left hover:text-tide"
+                      onClick={() => {
+                        toggleLanguage();
+                        setMenuOpen(false);
+                      }}
+                    >
+                      {language === "no" ? "English" : "Norsk"}
+                    </button>
+                  </>
+                )}
                 {session ? (
                   <button
                     className="text-left text-coral"
