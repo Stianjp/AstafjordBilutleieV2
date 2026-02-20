@@ -56,12 +56,20 @@ create table if not exists bookings (
   customer_comment text,
   child_seat_required boolean not null default false,
   child_seat_fee numeric not null default 0,
+  deductible_reduction_selected boolean not null default false,
+  deductible_reduction_fee numeric not null default 0,
   admin_note_1 text,
   admin_note_2 text,
   calculated_price numeric not null,
   status text not null default 'pending' check (status in ('pending', 'approved', 'rejected', 'cancelled', 'completed')),
   terms_accepted boolean not null default false
 );
+
+alter table if exists bookings
+  add column if not exists deductible_reduction_selected boolean not null default false;
+
+alter table if exists bookings
+  add column if not exists deductible_reduction_fee numeric not null default 0;
 
 create table if not exists discount_codes (
   id uuid primary key default uuid_generate_v4(),

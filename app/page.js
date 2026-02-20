@@ -44,6 +44,8 @@ export default function HomePage() {
   const [requestType, setRequestType] = useState("");
   const [customerComment, setCustomerComment] = useState("");
   const [childSeatFee, setChildSeatFee] = useState(300);
+  const [deductibleReductionDailyFee, setDeductibleReductionDailyFee] = useState(200);
+  const [deductibleReductionSelected, setDeductibleReductionSelected] = useState(false);
 
   useEffect(() => {
     const stored = getLanguageValue(window.localStorage.getItem("lang"));
@@ -75,8 +77,12 @@ export default function HomePage() {
       const data = await response.json();
       if (response.ok) {
         const childSeat = (data.add_ons || []).find((item) => item.key === "child_seat");
+        const deductibleReduction = (data.add_ons || []).find((item) => item.key === "deductible_reduction");
         if (childSeat?.fee != null) {
           setChildSeatFee(Number(childSeat.fee));
+        }
+        if (deductibleReduction?.fee != null) {
+          setDeductibleReductionDailyFee(Number(deductibleReduction.fee));
         }
       }
     } catch {
@@ -127,17 +133,32 @@ export default function HomePage() {
       discountAmount = Math.max(0, Math.min(totalBeforeDiscount, discountAmount));
     }
     const addOnFee = requestType === "child_seat" ? childSeatFee : 0;
+    const deductibleReductionFee = deductibleReductionSelected
+      ? deductibleReductionDailyFee * days
+      : 0;
 
     return {
       days,
       totalBeforeDiscount,
       discountAmount,
       childSeatFee: addOnFee,
-      total: totalBeforeDiscount - discountAmount + addOnFee,
+      deductibleReductionFee,
+      total: totalBeforeDiscount - discountAmount + addOnFee + deductibleReductionFee,
       deliveryFee: deliveryZero,
       pickupFee
     };
-  }, [selectedCar, startDate, endDate, selectedPickup, selectedDelivery, discountInfo, requestType, childSeatFee]);
+  }, [
+    selectedCar,
+    startDate,
+    endDate,
+    selectedPickup,
+    selectedDelivery,
+    discountInfo,
+    requestType,
+    childSeatFee,
+    deductibleReductionSelected,
+    deductibleReductionDailyFee
+  ]);
 
   const availableCars = useMemo(() => {
     if (!startDate || !endDate) return cars.filter((car) => car.active);
@@ -206,6 +227,10 @@ export default function HomePage() {
         discount_code: discountInfo?.valid ? discountInfo.code : null,
         child_seat_required: requestType === "child_seat",
         child_seat_fee: requestType === "child_seat" ? childSeatFee : 0,
+        deductible_reduction_selected: deductibleReductionSelected,
+        deductible_reduction_fee: deductibleReductionSelected && pricePreview
+          ? pricePreview.deductibleReductionFee
+          : 0,
         customer_comment: customerComment || null,
         customer
       })
@@ -231,6 +256,8 @@ export default function HomePage() {
       setShowRequest(false);
       setRequestType("");
       setChildSeatFee(300);
+      setDeductibleReductionDailyFee(200);
+      setDeductibleReductionSelected(false);
       setStep(1);
     }
     setLoading(false);
@@ -377,6 +404,9 @@ export default function HomePage() {
                     {pricePreview.childSeatFee > 0 && (
                       <p>{t.labels.childSeatFeeLabel}: {pricePreview.childSeatFee} kr</p>
                     )}
+                    {pricePreview.deductibleReductionFee > 0 && (
+                      <p>{t.labels.deductibleReductionFeeLabel}: {pricePreview.deductibleReductionFee} kr</p>
+                    )}
                     {pricePreview.discountAmount > 0 && (
                       <p>{t.labels.discountLabel}: -{Math.round(pricePreview.discountAmount)} kr</p>
                     )}
@@ -394,6 +424,7 @@ export default function HomePage() {
                         if (!next) {
                           setRequestType("");
                           setCustomerComment("");
+                          setDeductibleReductionSelected(false);
                         }
                       }}
                     />
@@ -429,6 +460,33 @@ export default function HomePage() {
                         />
                         <span>{t.labels.requestOther}</span>
                       </label>
+                      <label className="flex items-start gap-2 text-sm">
+                        <input
+                          type="checkbox"
+                          checked={deductibleReductionSelected}
+                          onChange={(event) => setDeductibleReductionSelected(event.target.checked)}
+                        />
+                        <span>
+                          {t.labels.deductibleReductionLabel}
+                          <span className="block text-xs text-ink/60">
+                            {t.labels.deductibleReductionFeeHint.replace("{fee}", String(deductibleReductionDailyFee))}
+                          </span>
+                        </span>
+                      </label>
+                      {deductibleReductionSelected && (
+                        <div className="rounded-xl border border-ink/10 bg-white/70 p-3 text-xs">
+                          <p>
+                            {t.contract.deductibleReductionInfo.replace(
+                              "{fee}",
+                              String(deductibleReductionDailyFee)
+                            )}
+                          </p>
+                          <p className="mt-2">{t.contract.deductibleReductionExceptionsIntro}</p>
+                          {t.contract.deductibleReductionExceptions.map((line) => (
+                            <p key={line}>{line}</p>
+                          ))}
+                        </div>
+                      )}
                       {requestType === "other" && (
                         <div>
                           <label className="block text-sm">{t.labels.commentLabel}</label>
@@ -590,6 +648,9 @@ export default function HomePage() {
                     {pricePreview.childSeatFee > 0 && (
                       <p>{t.labels.childSeatFeeLabel}: {pricePreview.childSeatFee} kr</p>
                     )}
+                    {pricePreview.deductibleReductionFee > 0 && (
+                      <p>{t.labels.deductibleReductionFeeLabel}: {pricePreview.deductibleReductionFee} kr</p>
+                    )}
                     {pricePreview.discountAmount > 0 && (
                       <p>{t.labels.discountLabel}: -{Math.round(pricePreview.discountAmount)} kr</p>
                     )}
@@ -615,6 +676,12 @@ export default function HomePage() {
                   {requestType === "child_seat" && (
                     <p>{t.labels.childSeatLabel}: {t.labels.requestChildSeat} (+{childSeatFee} NOK)</p>
                   )}
+                  <p>
+                    {t.contract.deductibleReductionChoice}: {deductibleReductionSelected ? t.contract.yes : t.contract.no}
+                  </p>
+                  {deductibleReductionSelected && pricePreview?.deductibleReductionFee > 0 && (
+                    <p>{t.labels.deductibleReductionFeeLabel}: {pricePreview.deductibleReductionFee} NOK</p>
+                  )}
                   {requestType === "other" && customerComment && (
                     <p>{t.labels.commentLabel}: {customerComment}</p>
                   )}
@@ -633,6 +700,27 @@ export default function HomePage() {
                       {line}{line.toLowerCase().includes("drivstoff") || line.toLowerCase().includes("fuel") ? ` ${t.labels.fuelType}: ${selectedCar?.fuel || "-"}.` : ""}
                     </p>
                   ))}
+                  <p className="mt-2">{t.contract.deductibleReductionTitle}</p>
+                  <p>
+                    {t.contract.deductibleReductionInfo.replace(
+                      "{fee}",
+                      String(deductibleReductionDailyFee)
+                    )}
+                  </p>
+                  {deductibleReductionSelected && (
+                    <p>
+                      {t.contract.deductibleReductionAccepted.replace(
+                        "{fee}",
+                        String(deductibleReductionDailyFee)
+                      )}
+                    </p>
+                  )}
+                  <p>{t.contract.deductibleReductionExceptionsIntro}</p>
+                  {t.contract.deductibleReductionExceptions.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                  <p className="mt-2">{t.contract.cancellationPolicyTitle}</p>
+                  <p>{t.contract.cancellationPolicyText}</p>
                   <p className="mt-2">{t.contract.termsTitle}</p>
                   {t.contract.terms.map((line) => (
                     <p key={line}>{line}</p>

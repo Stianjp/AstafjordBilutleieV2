@@ -50,6 +50,24 @@ export default function HowToBookPage() {
           </div>
         </div>
 
+        <section className="mt-10">
+          <h2 className="font-display text-2xl">{t.howToBook.faqTitle}</h2>
+          <div className="mt-4 grid gap-4">
+            <div className="gradient-card rounded-3xl p-6 shadow-card">
+              <p className="text-sm font-semibold">{t.howToBook.faqDeductibleQ}</p>
+              <p className="mt-2 text-sm text-ink/80">{t.howToBook.faqDeductibleA}</p>
+            </div>
+            <div className="gradient-card rounded-3xl p-6 shadow-card">
+              <p className="text-sm font-semibold">{t.howToBook.faqChildSeatQ}</p>
+              <p className="mt-2 text-sm text-ink/80">{t.howToBook.faqChildSeatA}</p>
+            </div>
+            <div className="gradient-card rounded-3xl p-6 shadow-card">
+              <p className="text-sm font-semibold">{t.howToBook.faqCancellationQ}</p>
+              <p className="mt-2 text-sm text-ink/80">{t.howToBook.faqCancellationA}</p>
+            </div>
+          </div>
+        </section>
+
         <div className="mt-10 rounded-3xl bg-ink px-6 py-8 text-white">
           <p className="text-2xl font-display">{t.howToBook.easier} <span className="text-coral">{t.howToBook.itDoesntGet}</span></p>
         </div>

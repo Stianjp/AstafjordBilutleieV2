@@ -27,6 +27,8 @@ export default function AdminBookingDetail() {
     customer_comment: "",
     child_seat_required: false,
     child_seat_fee: 300,
+    deductible_reduction_selected: false,
+    deductible_reduction_fee: 0,
     admin_note_1: "",
     admin_note_2: "",
     start_km: "",
@@ -82,6 +84,8 @@ export default function AdminBookingDetail() {
       customer_comment: bookingData.booking.customer_comment || "",
       child_seat_required: bookingData.booking.child_seat_required || false,
       child_seat_fee: bookingData.booking.child_seat_fee ?? 300,
+      deductible_reduction_selected: bookingData.booking.deductible_reduction_selected || false,
+      deductible_reduction_fee: bookingData.booking.deductible_reduction_fee ?? 0,
       admin_note_1: bookingData.booking.admin_note_1 || "",
       admin_note_2: bookingData.booking.admin_note_2 || "",
       start_km: bookingData.booking.start_km ?? "",
@@ -119,6 +123,10 @@ export default function AdminBookingDetail() {
         customer_comment: form.customer_comment,
         child_seat_required: form.child_seat_required,
         child_seat_fee: form.child_seat_required ? Number(form.child_seat_fee || 300) : 0,
+        deductible_reduction_selected: form.deductible_reduction_selected,
+        deductible_reduction_fee: form.deductible_reduction_selected
+          ? Number(form.deductible_reduction_fee || 0)
+          : 0,
         admin_note_1: form.admin_note_1,
         admin_note_2: form.admin_note_2,
         days: form.days ? Number(form.days) : undefined,
@@ -225,6 +233,35 @@ export default function AdminBookingDetail() {
                       type="number"
                       value={form.child_seat_fee}
                       onChange={(event) => setForm({ ...form, child_seat_fee: event.target.value })}
+                      className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                    />
+                  </div>
+                )}
+                <label className="mt-1 flex items-center gap-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={form.deductible_reduction_selected}
+                    onChange={(event) => {
+                      const checked = event.target.checked;
+                      const fallbackFee = Number(form.days || 0) > 0 ? Number(form.days || 0) * 200 : 200;
+                      setForm({
+                        ...form,
+                        deductible_reduction_selected: checked,
+                        deductible_reduction_fee: checked
+                          ? Number(form.deductible_reduction_fee || 0) || fallbackFee
+                          : 0
+                      });
+                    }}
+                  />
+                  Egenandelsreduksjon ved skade
+                </label>
+                {form.deductible_reduction_selected && (
+                  <div>
+                    <label className="text-sm">Egenandelsreduksjon (tillegg)</label>
+                    <input
+                      type="number"
+                      value={form.deductible_reduction_fee}
+                      onChange={(event) => setForm({ ...form, deductible_reduction_fee: event.target.value })}
                       className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
                     />
                   </div>

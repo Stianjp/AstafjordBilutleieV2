@@ -69,7 +69,7 @@ const resolveDiscount = async (code, totalBeforeDiscount) => {
 export async function POST(request) {
   const payload = await request.json();
   const childSeatRequired = payload.child_seat_required === true;
-  const childSeatFee = childSeatRequired ? 300 : 0;
+  const deductibleReductionSelected = payload.deductible_reduction_selected === true;
 
   const requiredFields = [
     "car_id",
@@ -107,6 +107,22 @@ export async function POST(request) {
   if (days <= 0) {
     return Response.json({ error: "Ugyldig dato" }, { status: 400 });
   }
+
+  const { data: addOns } = await supabaseService
+    .from("add_ons")
+    .select("key, fee, active")
+    .in("key", ["child_seat", "deductible_reduction"])
+    .eq("active", true);
+
+  const addOnMap = new Map((addOns || []).map((item) => [item.key, Number(item.fee || 0)]));
+  const childSeatUnitFee = addOnMap.has("child_seat") ? addOnMap.get("child_seat") : 300;
+  const deductibleReductionDailyFee = addOnMap.has("deductible_reduction")
+    ? addOnMap.get("deductible_reduction")
+    : 200;
+  const childSeatFee = childSeatRequired ? childSeatUnitFee : 0;
+  const deductibleReductionFee = deductibleReductionSelected
+    ? deductibleReductionDailyFee * days
+    : 0;
 
   const { data: car, error: carError } = await supabaseService
     .from("cars")
@@ -167,7 +183,10 @@ export async function POST(request) {
   if (discountResult.error) {
     return Response.json({ error: discountResult.error }, { status: 400 });
   }
-  const calculatedPrice = totalBeforeDiscount - discountResult.discountAmount + childSeatFee;
+  const calculatedPrice = totalBeforeDiscount
+    - discountResult.discountAmount
+    + childSeatFee
+    + deductibleReductionFee;
 
   const { data: existingCustomer } = await supabaseService
     .from("customers")
@@ -236,6 +255,8 @@ export async function POST(request) {
       pickup_fee: pickupFee,
       child_seat_required: childSeatRequired,
       child_seat_fee: childSeatFee,
+      deductible_reduction_selected: deductibleReductionSelected,
+      deductible_reduction_fee: deductibleReductionFee,
       customer_comment: payload.customer_comment || null,
       discount_code_id: discountResult.discountCodeId,
       discount_code: discountResult.discountCode,

@@ -36,5 +36,6 @@ on conflict (reg_number) do nothing;
 
 insert into add_ons (key, name, fee, active)
 values
-  ('child_seat', 'Barnestol 3 mnd - 4 år (maks 18 kg)', 300, true)
+  ('child_seat', 'Barnestol 3 mnd - 4 år (maks 18 kg)', 300, true),
+  ('deductible_reduction', 'Egenandelsreduksjon ved skade', 200, true)
 on conflict (key) do nothing;

@@ -255,6 +255,11 @@ export default function AdminDashboard() {
                       Barnestol: Ja (+{booking.child_seat_fee != null ? booking.child_seat_fee : 300} kr)
                     </p>
                   )}
+                  {booking.deductible_reduction_selected && (
+                    <p className="text-sm text-ink/80 sm:text-base">
+                      Egenandelsreduksjon: Ja (+{booking.deductible_reduction_fee != null ? booking.deductible_reduction_fee : 0} kr)
+                    </p>
+                  )}
                   {booking.customer_comment && (
                     <p className="text-sm text-ink/80 sm:text-base">
                       Kommentar: {booking.customer_comment}
