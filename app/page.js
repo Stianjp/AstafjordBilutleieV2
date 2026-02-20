@@ -41,7 +41,8 @@ export default function HomePage() {
   const [discountLoading, setDiscountLoading] = useState(false);
   const [showDiscount, setShowDiscount] = useState(false);
   const [showRequest, setShowRequest] = useState(false);
-  const [requestType, setRequestType] = useState("");
+  const [childSeatSelected, setChildSeatSelected] = useState(false);
+  const [otherRequestSelected, setOtherRequestSelected] = useState(false);
   const [customerComment, setCustomerComment] = useState("");
   const [childSeatFee, setChildSeatFee] = useState(300);
   const [deductibleReductionDailyFee, setDeductibleReductionDailyFee] = useState(200);
@@ -132,7 +133,7 @@ export default function HomePage() {
       }
       discountAmount = Math.max(0, Math.min(totalBeforeDiscount, discountAmount));
     }
-    const addOnFee = requestType === "child_seat" ? childSeatFee : 0;
+    const addOnFee = childSeatSelected ? childSeatFee : 0;
     const deductibleReductionFee = deductibleReductionSelected
       ? deductibleReductionDailyFee * days
       : 0;
@@ -154,7 +155,7 @@ export default function HomePage() {
     selectedPickup,
     selectedDelivery,
     discountInfo,
-    requestType,
+    childSeatSelected,
     childSeatFee,
     deductibleReductionSelected,
     deductibleReductionDailyFee
@@ -225,8 +226,8 @@ export default function HomePage() {
         end_time: endTime,
         terms_accepted: termsAccepted,
         discount_code: discountInfo?.valid ? discountInfo.code : null,
-        child_seat_required: requestType === "child_seat",
-        child_seat_fee: requestType === "child_seat" ? childSeatFee : 0,
+        child_seat_required: childSeatSelected,
+        child_seat_fee: childSeatSelected ? childSeatFee : 0,
         deductible_reduction_selected: deductibleReductionSelected,
         deductible_reduction_fee: deductibleReductionSelected && pricePreview
           ? pricePreview.deductibleReductionFee
@@ -254,7 +255,8 @@ export default function HomePage() {
       setDiscountMessage("");
       setShowDiscount(false);
       setShowRequest(false);
-      setRequestType("");
+      setChildSeatSelected(false);
+      setOtherRequestSelected(false);
       setChildSeatFee(300);
       setDeductibleReductionDailyFee(200);
       setDeductibleReductionSelected(false);
@@ -422,7 +424,8 @@ export default function HomePage() {
                         const next = event.target.checked;
                         setShowRequest(next);
                         if (!next) {
-                          setRequestType("");
+                          setChildSeatSelected(false);
+                          setOtherRequestSelected(false);
                           setCustomerComment("");
                           setDeductibleReductionSelected(false);
                         }
@@ -430,18 +433,14 @@ export default function HomePage() {
                     />
                     {t.labels.requestToggle}
                   </label>
+                  <p className="mt-1 text-xs text-ink/60">{t.labels.requestDescription}</p>
                   {showRequest && (
                     <div className="mt-3 space-y-3">
                       <label className="flex items-start gap-2 text-sm">
                         <input
-                          type="radio"
-                          name="request_type"
-                          value="child_seat"
-                          checked={requestType === "child_seat"}
-                          onChange={(event) => {
-                            setRequestType(event.target.value);
-                            setCustomerComment("");
-                          }}
+                          type="checkbox"
+                          checked={childSeatSelected}
+                          onChange={(event) => setChildSeatSelected(event.target.checked)}
                         />
                         <span>
                           {t.labels.requestChildSeat}
@@ -452,11 +451,15 @@ export default function HomePage() {
                       </label>
                       <label className="flex items-start gap-2 text-sm">
                         <input
-                          type="radio"
-                          name="request_type"
-                          value="other"
-                          checked={requestType === "other"}
-                          onChange={(event) => setRequestType(event.target.value)}
+                          type="checkbox"
+                          checked={otherRequestSelected}
+                          onChange={(event) => {
+                            const next = event.target.checked;
+                            setOtherRequestSelected(next);
+                            if (!next) {
+                              setCustomerComment("");
+                            }
+                          }}
                         />
                         <span>{t.labels.requestOther}</span>
                       </label>
@@ -487,7 +490,7 @@ export default function HomePage() {
                           ))}
                         </div>
                       )}
-                      {requestType === "other" && (
+                      {otherRequestSelected && (
                         <div>
                           <label className="block text-sm">{t.labels.commentLabel}</label>
                           <textarea
@@ -673,7 +676,7 @@ export default function HomePage() {
                   <p>{t.contract.start}: {startDate || "-"} {t.contract.timePrefix} {startTime}</p>
                   <p>{t.contract.end}: {endDate || "-"} {t.contract.timePrefix} {endTime}</p>
                   <p>{t.contract.period}: {pricePreview?.days || "-"} {t.labels.daysLabel}</p>
-                  {requestType === "child_seat" && (
+                  {childSeatSelected && (
                     <p>{t.labels.childSeatLabel}: {t.labels.requestChildSeat} (+{childSeatFee} NOK)</p>
                   )}
                   <p>
@@ -682,7 +685,7 @@ export default function HomePage() {
                   {deductibleReductionSelected && pricePreview?.deductibleReductionFee > 0 && (
                     <p>{t.labels.deductibleReductionFeeLabel}: {pricePreview.deductibleReductionFee} NOK</p>
                   )}
-                  {requestType === "other" && customerComment && (
+                  {otherRequestSelected && customerComment && (
                     <p>{t.labels.commentLabel}: {customerComment}</p>
                   )}
                   {pricePreview?.discountAmount > 0 && (
