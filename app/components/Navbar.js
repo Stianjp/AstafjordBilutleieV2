@@ -75,20 +75,22 @@ export default function Navbar({ showBrand = true }) {
               </button>
             </>
           )}
-          {session ? (
-            <button
-              className="rounded-full border border-ink px-4 py-1 text-xs uppercase tracking-wide"
-              onClick={() => supabase.auth.signOut()}
-            >
-              {t.nav.logout}
-            </button>
-          ) : (
-            <Link
-              href="/login"
-              className="rounded-full border border-ink px-4 py-1 text-xs uppercase tracking-wide"
-            >
-              {t.nav.login}
-            </Link>
+          {isAdminContext && (
+            session ? (
+              <button
+                className="rounded-full border border-ink px-4 py-1 text-xs uppercase tracking-wide"
+                onClick={() => supabase.auth.signOut()}
+              >
+                {t.nav.logout}
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className="rounded-full border border-ink px-4 py-1 text-xs uppercase tracking-wide"
+              >
+                {t.nav.login}
+              </Link>
+            )
           )}
         </div>
         <div className="relative md:hidden">
@@ -124,20 +126,22 @@ export default function Navbar({ showBrand = true }) {
                     </button>
                   </>
                 )}
-                {session ? (
-                  <button
-                    className="text-left text-coral"
-                    onClick={() => {
-                      supabase.auth.signOut();
-                      setMenuOpen(false);
-                    }}
-                  >
-                    {t.nav.logout}
-                  </button>
-                ) : (
-                  <Link href="/login" className="hover:text-tide" onClick={() => setMenuOpen(false)}>
-                    {t.nav.login}
-                  </Link>
+                {isAdminContext && (
+                  session ? (
+                    <button
+                      className="text-left text-coral"
+                      onClick={() => {
+                        supabase.auth.signOut();
+                        setMenuOpen(false);
+                      }}
+                    >
+                      {t.nav.logout}
+                    </button>
+                  ) : (
+                    <Link href="/login" className="hover:text-tide" onClick={() => setMenuOpen(false)}>
+                      {t.nav.login}
+                    </Link>
+                  )
                 )}
               </div>
             </div>

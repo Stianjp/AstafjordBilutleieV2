@@ -64,9 +64,9 @@ export default function CarCard({ car, onReserve, showReserve }) {
             <p className="mt-1 text-xs uppercase tracking-wide text-coral">Opptatt i valgt periode</p>
           )}
         </div>
-        <div className="text-right">
-          <p className="text-lg font-semibold">{car.daily_price} kr</p>
-          <p className="text-xs uppercase tracking-wide text-ink/60">Per dag</p>
+        <div className="shrink-0 text-right">
+          <p className="whitespace-nowrap text-base font-semibold sm:text-lg">{car.daily_price} kr</p>
+          <p className="text-[11px] tracking-wide text-ink/60">Per dag</p>
         </div>
       </div>
       {showReserve && (
