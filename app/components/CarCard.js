@@ -44,19 +44,19 @@ export default function CarCard({ car, onReserve, showReserve }) {
         />
       </div>
       <div className="flex items-start justify-between gap-4">
-        <div>
+        <div className="min-w-0">
           <h3 className="font-display text-xl">{car.model}</h3>
-          <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink/70">
-            <span className="inline-flex items-center gap-1.5">
-              <SeatsIcon />
+          <div className="mt-1 flex items-center gap-2.5 whitespace-nowrap text-xs text-ink/70 sm:text-sm">
+            <span className="inline-flex shrink-0 items-center gap-1">
+              <span className="scale-90"><SeatsIcon /></span>
               <span>{car.seats} seter</span>
             </span>
-            <span className="inline-flex items-center gap-1.5">
-              <TransmissionIcon />
+            <span className="inline-flex shrink-0 items-center gap-1">
+              <span className="scale-90"><TransmissionIcon /></span>
               <span>{car.transmission}</span>
             </span>
-            <span className="inline-flex items-center gap-1.5">
-              <FuelIcon />
+            <span className="inline-flex shrink-0 items-center gap-1">
+              <span className="scale-90"><FuelIcon /></span>
               <span>{car.fuel}</span>
             </span>
           </div>
