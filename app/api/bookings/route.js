@@ -108,17 +108,32 @@ export async function POST(request) {
     return Response.json({ error: "Ugyldig dato" }, { status: 400 });
   }
 
-  const { data: addOns } = await supabaseService
+  const { data: addOns, error: addOnsError } = await supabaseService
     .from("add_ons")
     .select("key, fee, active")
     .in("key", ["child_seat", "deductible_reduction"])
     .eq("active", true);
 
+  if (addOnsError) {
+    return Response.json({ error: addOnsError.message }, { status: 500 });
+  }
+
   const addOnMap = new Map((addOns || []).map((item) => [item.key, Number(item.fee || 0)]));
-  const childSeatUnitFee = addOnMap.has("child_seat") ? addOnMap.get("child_seat") : 300;
-  const deductibleReductionDailyFee = addOnMap.has("deductible_reduction")
+  const childSeatActive = addOnMap.has("child_seat");
+  const deductibleReductionActive = addOnMap.has("deductible_reduction");
+
+  if (childSeatRequired && !childSeatActive) {
+    return Response.json({ error: "Barnestol er ikke tilgjengelig for denne bestillingen" }, { status: 400 });
+  }
+
+  if (deductibleReductionSelected && !deductibleReductionActive) {
+    return Response.json({ error: "Egenandelsreduksjon er ikke tilgjengelig for denne bestillingen" }, { status: 400 });
+  }
+
+  const childSeatUnitFee = childSeatActive ? addOnMap.get("child_seat") : 0;
+  const deductibleReductionDailyFee = deductibleReductionActive
     ? addOnMap.get("deductible_reduction")
-    : 200;
+    : 0;
   const childSeatFee = childSeatRequired ? childSeatUnitFee : 0;
   const deductibleReductionFee = deductibleReductionSelected
     ? deductibleReductionDailyFee * days

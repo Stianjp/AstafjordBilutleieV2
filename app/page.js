@@ -47,6 +47,10 @@ export default function HomePage() {
   const [childSeatFee, setChildSeatFee] = useState(300);
   const [deductibleReductionDailyFee, setDeductibleReductionDailyFee] = useState(200);
   const [deductibleReductionSelected, setDeductibleReductionSelected] = useState(false);
+  const [addOnAvailability, setAddOnAvailability] = useState({
+    child_seat: true,
+    deductible_reduction: true
+  });
 
   useEffect(() => {
     const stored = getLanguageValue(window.localStorage.getItem("lang"));
@@ -80,6 +84,10 @@ export default function HomePage() {
       if (response.ok) {
         const childSeat = (data.add_ons || []).find((item) => item.key === "child_seat");
         const deductibleReduction = (data.add_ons || []).find((item) => item.key === "deductible_reduction");
+        setAddOnAvailability({
+          child_seat: Boolean(childSeat),
+          deductible_reduction: Boolean(deductibleReduction)
+        });
         if (childSeat?.fee != null) {
           setChildSeatFee(Number(childSeat.fee));
         }
@@ -109,6 +117,21 @@ export default function HomePage() {
     };
     fetchAvailability();
   }, [startDate, endDate]);
+
+  const childSeatAvailable = addOnAvailability.child_seat;
+  const deductibleReductionAvailable = addOnAvailability.deductible_reduction;
+
+  useEffect(() => {
+    if (!childSeatAvailable && childSeatSelected) {
+      setChildSeatSelected(false);
+    }
+  }, [childSeatAvailable, childSeatSelected]);
+
+  useEffect(() => {
+    if (!deductibleReductionAvailable && deductibleReductionSelected) {
+      setDeductibleReductionSelected(false);
+    }
+  }, [deductibleReductionAvailable, deductibleReductionSelected]);
 
   const selectedPickup = locations.find((loc) => loc.id === pickupLocation);
   const selectedDelivery = locations.find((loc) => loc.id === deliveryLocation);
@@ -451,12 +474,15 @@ export default function HomePage() {
                         <input
                           type="checkbox"
                           checked={childSeatSelected}
+                          disabled={!childSeatAvailable}
                           onChange={(event) => setChildSeatSelected(event.target.checked)}
                         />
                         <span>
                           {t.labels.requestChildSeat}
                           <span className="block text-xs text-ink/60">
-                            {t.labels.childSeatFeeLabel}: {childSeatFee} kr
+                            {childSeatAvailable
+                              ? `${t.labels.childSeatFeeLabel}: ${childSeatFee} kr`
+                              : t.labels.addOnUnavailable}
                           </span>
                         </span>
                       </label>
@@ -464,12 +490,15 @@ export default function HomePage() {
                         <input
                           type="checkbox"
                           checked={deductibleReductionSelected}
+                          disabled={!deductibleReductionAvailable}
                           onChange={(event) => setDeductibleReductionSelected(event.target.checked)}
                         />
                         <span>
                           {t.labels.deductibleReductionLabel}
                           <span className="block text-xs text-ink/60">
-                            {t.labels.deductibleReductionFeeHint.replace("{fee}", String(deductibleReductionDailyFee))}
+                            {deductibleReductionAvailable
+                              ? t.labels.deductibleReductionFeeHint.replace("{fee}", String(deductibleReductionDailyFee))
+                              : t.labels.addOnUnavailable}
                           </span>
                         </span>
                       </label>
