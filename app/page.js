@@ -114,9 +114,13 @@ export default function HomePage() {
   const selectedDelivery = locations.find((loc) => loc.id === deliveryLocation);
   const selectedThirdParty = selectedCar?.third_party || null;
   const selectedThirdPartyName = selectedThirdParty
-    ? (selectedThirdParty.company_name
-      ? `${selectedThirdParty.name} (${selectedThirdParty.company_name})`
-      : selectedThirdParty.name)
+    ? (() => {
+      const name = selectedThirdParty.name || "";
+      const company = selectedThirdParty.company_name || "";
+      if (name && company) return `${name} (${company})`;
+      if (name) return name;
+      return company;
+    })()
     : "";
 
   const pricePreview = useMemo(() => {
@@ -676,7 +680,9 @@ export default function HomePage() {
                 <div className="rounded-2xl bg-white/70 p-6 text-sm">
                   <p>
                     {selectedThirdParty
-                      ? t.contract.introThirdParty.replace("{thirdParty}", selectedThirdPartyName)
+                      ? t.contract.introThirdParty
+                        .replace("{thirdParty}", selectedThirdPartyName)
+                        .replace("{phone}", selectedThirdParty.phone || "-")
                       : t.contract.intro}
                   </p>
                   <p>{t.contract.name}: {customer.first_name} {customer.last_name}</p>
