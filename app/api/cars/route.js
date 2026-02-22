@@ -6,7 +6,7 @@ export const revalidate = 0;
 export async function GET() {
   const { data, error } = await supabaseService
     .from("cars")
-    .select("*, locations:current_location_id (id, name)")
+    .select("*, locations:current_location_id (id, name), third_party:third_party_id(*)")
     .eq("active", true)
     .order("model", { ascending: true });
 

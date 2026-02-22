@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import Navbar from "../../../components/Navbar";
 import { supabase } from "../../../../lib/supabaseClient";
 
 export default function AdminBookingDetail() {
@@ -147,19 +146,14 @@ export default function AdminBookingDetail() {
 
   if (!booking) {
     return (
-      <main className="min-h-screen">
-        <Navbar />
-        <section className="mx-auto w-full max-w-4xl px-6 pb-16 pt-6">
-          <p className="text-sm text-ink/70">{message || "Laster..."}</p>
-        </section>
-      </main>
+      <section className="mx-auto w-full max-w-4xl px-6 pb-16 pt-6">
+        <p className="text-sm text-ink/70">{message || "Laster..."}</p>
+      </section>
     );
   }
 
   return (
-    <main className="min-h-screen">
-      <Navbar />
-      <section className="mx-auto w-full max-w-4xl px-6 pb-16 pt-6">
+    <section className="mx-auto w-full max-w-4xl px-6 pb-16 pt-6">
         <button
           className="text-xs uppercase tracking-wide text-ink/60"
           onClick={() => router.back()}
@@ -405,7 +399,6 @@ export default function AdminBookingDetail() {
             </button>
           </div>
         </div>
-      </section>
-    </main>
+    </section>
   );
 }

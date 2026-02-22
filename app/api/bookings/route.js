@@ -126,7 +126,7 @@ export async function POST(request) {
 
   const { data: car, error: carError } = await supabaseService
     .from("cars")
-    .select("*")
+    .select("*, third_party:third_party_id(*)")
     .eq("id", payload.car_id)
     .single();
 

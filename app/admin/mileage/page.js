@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Navbar from "../../components/Navbar";
 import { supabase } from "../../../lib/supabaseClient";
 
 export default function AdminMileagePage() {
@@ -183,9 +182,7 @@ export default function AdminMileagePage() {
   };
 
   return (
-    <main className="min-h-screen">
-      <Navbar />
-      <section className="mx-auto w-full max-w-6xl px-6 pb-16 pt-6">
+    <section className="mx-auto w-full max-w-6xl px-6 pb-16 pt-6">
         <h1 className="font-display text-3xl">Admin: kjorebok</h1>
         <p className="mt-2 text-sm text-ink/70">Registrer start- og sluttkm og arsaken.</p>
         <div className="mt-6 gradient-card rounded-3xl p-6 shadow-card">
@@ -376,7 +373,6 @@ export default function AdminMileagePage() {
             );
           })}
         </div>
-      </section>
-    </main>
+    </section>
   );
 }

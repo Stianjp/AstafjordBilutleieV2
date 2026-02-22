@@ -19,7 +19,7 @@ export async function PATCH(request, { params }) {
     .from("bookings")
     .update({ status })
     .eq("id", params.id)
-    .select("*, customers(*), cars(*), pickup:pickup_location_id(*), delivery:delivery_location_id(*)")
+    .select("*, customers(*), cars(*, third_party:third_party_id(*)), pickup:pickup_location_id(*), delivery:delivery_location_id(*)")
     .single();
 
   if (error) {
@@ -43,7 +43,7 @@ export async function GET(request, { params }) {
 
   const { data, error } = await supabaseService
     .from("bookings")
-    .select("*, customers(*), cars(*), pickup:pickup_location_id(*), delivery:delivery_location_id(*)")
+    .select("*, customers(*), cars(*, third_party:third_party_id(*)), pickup:pickup_location_id(*), delivery:delivery_location_id(*)")
     .eq("id", params.id)
     .single();
 
@@ -64,7 +64,7 @@ export async function PUT(request, { params }) {
 
   const { data: booking, error: bookingError } = await supabaseService
     .from("bookings")
-    .select("*, cars(*), customers(*)")
+    .select("*, cars(*, third_party:third_party_id(*)), customers(*)")
     .eq("id", params.id)
     .single();
 
@@ -158,7 +158,7 @@ export async function PUT(request, { params }) {
       status: statusUpdate
     })
     .eq("id", params.id)
-    .select("*, customers(*), cars(*), pickup:pickup_location_id(*), delivery:delivery_location_id(*)")
+    .select("*, customers(*), cars(*, third_party:third_party_id(*)), pickup:pickup_location_id(*), delivery:delivery_location_id(*)")
     .single();
 
   if (updateError) {
@@ -186,7 +186,7 @@ export async function PUT(request, { params }) {
 
   const { data: refreshed, error: refreshError } = await supabaseService
     .from("bookings")
-    .select("*, customers(*), cars(*), pickup:pickup_location_id(*), delivery:delivery_location_id(*)")
+    .select("*, customers(*), cars(*, third_party:third_party_id(*)), pickup:pickup_location_id(*), delivery:delivery_location_id(*)")
     .eq("id", params.id)
     .single();
 

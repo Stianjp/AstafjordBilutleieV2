@@ -13,7 +13,7 @@ export async function GET(request) {
   let query = supabaseService
     .from("bookings")
     .select(
-      "*, customers(*), cars(*), pickup:pickup_location_id(*), delivery:delivery_location_id(*)"
+      "*, customers(*), cars(*, third_party:third_party_id(*)), pickup:pickup_location_id(*), delivery:delivery_location_id(*)"
     )
     .order("start_date", { ascending: false });
 

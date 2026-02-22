@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Navbar from "../../components/Navbar";
 import { supabase } from "../../../lib/supabaseClient";
 
 const emptyForm = {
@@ -14,6 +13,9 @@ const emptyForm = {
   daily_price: "",
   monthly_price_cap: "",
   current_location_id: "",
+  has_navigation: true,
+  owned_by_third_party: false,
+  third_party_id: "",
   current_km: "",
   active: true
 };
@@ -21,6 +23,7 @@ const emptyForm = {
 export default function AdminCarsPage() {
   const [cars, setCars] = useState([]);
   const [locations, setLocations] = useState([]);
+  const [thirdParties, setThirdParties] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [message, setMessage] = useState("");
@@ -33,20 +36,27 @@ export default function AdminCarsPage() {
       return;
     }
 
-    const [carsResponse, locationsResponse] = await Promise.all([
+    const [carsResponse, locationsResponse, thirdPartiesResponse] = await Promise.all([
       fetch("/api/admin/cars", { headers: { Authorization: `Bearer ${token}` } }),
-      fetch("/api/admin/locations", { headers: { Authorization: `Bearer ${token}` } })
+      fetch("/api/admin/locations", { headers: { Authorization: `Bearer ${token}` } }),
+      fetch("/api/admin/third-parties", { headers: { Authorization: `Bearer ${token}` } })
     ]);
 
     const carsData = await carsResponse.json();
     const locationsData = await locationsResponse.json();
+    const thirdPartiesData = await thirdPartiesResponse.json();
     if (!carsResponse.ok) {
       setMessage(carsData.error || "Kunne ikke hente biler.");
+      return;
+    }
+    if (!thirdPartiesResponse.ok) {
+      setMessage(thirdPartiesData.error || "Kunne ikke hente tredjeparter.");
       return;
     }
 
     setCars(carsData.cars || []);
     setLocations(locationsData.locations || []);
+    setThirdParties(thirdPartiesData.third_parties || []);
   };
 
   useEffect(() => {
@@ -70,7 +80,10 @@ export default function AdminCarsPage() {
         seats: Number(form.seats),
         daily_price: Number(form.daily_price),
         monthly_price_cap: Number(form.monthly_price_cap),
-        current_km: Number(form.current_km)
+        current_km: Number(form.current_km),
+        has_navigation: form.has_navigation,
+        owned_by_third_party: form.owned_by_third_party,
+        third_party_id: form.owned_by_third_party ? form.third_party_id || null : null
       })
     });
 
@@ -97,6 +110,9 @@ export default function AdminCarsPage() {
       daily_price: car.daily_price,
       monthly_price_cap: car.monthly_price_cap,
       current_location_id: car.current_location_id || "",
+      has_navigation: car.has_navigation ?? true,
+      owned_by_third_party: car.owned_by_third_party ?? false,
+      third_party_id: car.third_party_id || "",
       current_km: car.current_km,
       active: car.active
     });
@@ -118,9 +134,7 @@ export default function AdminCarsPage() {
   };
 
   return (
-    <main className="min-h-screen">
-      <Navbar />
-      <section className="mx-auto w-full max-w-6xl px-6 pb-16 pt-6">
+    <section className="mx-auto w-full max-w-6xl px-6 pb-16 pt-6">
         <h1 className="font-display text-3xl">Admin: biler</h1>
         {message && <p className="mt-3 text-sm text-coral">{message}</p>}
         <div className="mt-6 grid gap-6 lg:grid-cols-[0.7fr_1.3fr]">
@@ -236,6 +250,49 @@ export default function AdminCarsPage() {
               />
               Aktiv
             </label>
+            <label className="mt-4 flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.has_navigation}
+                onChange={(event) => setForm({ ...form, has_navigation: event.target.checked })}
+              />
+              Navigasjon
+            </label>
+            <label className="mt-2 flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={form.owned_by_third_party}
+                onChange={(event) => {
+                  const checked = event.target.checked;
+                  setForm({
+                    ...form,
+                    owned_by_third_party: checked,
+                    third_party_id: checked ? form.third_party_id : ""
+                  });
+                }}
+              />
+              Eies av tredjepart
+            </label>
+            {form.owned_by_third_party && (
+              <div className="mt-3">
+                <label className="text-sm">Tredjepart</label>
+                <select
+                  value={form.third_party_id}
+                  onChange={(event) => setForm({ ...form, third_party_id: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                  required
+                >
+                  <option value="">Velg tredjepart</option>
+                  {thirdParties
+                    .filter((party) => party.active)
+                    .map((party) => (
+                      <option key={party.id} value={party.id}>
+                        {party.company_name ? `${party.name} (${party.company_name})` : party.name}
+                      </option>
+                    ))}
+                </select>
+              </div>
+            )}
             <div className="mt-6 flex items-center gap-3">
               <button
                 type="submit"
@@ -263,6 +320,14 @@ export default function AdminCarsPage() {
                 <p className="font-medium">{car.model}</p>
                 <p className="text-sm text-ink/60">{car.reg_number}</p>
                 <p className="text-sm text-ink/60">{car.daily_price} kr per dag</p>
+                <p className="text-sm text-ink/60">Navigasjon: {car.has_navigation ? "Ja" : "Nei"}</p>
+                {car.owned_by_third_party && (
+                  <p className="text-sm text-ink/60">
+                    Tredjepart: {car.third_party?.company_name
+                      ? `${car.third_party.name} (${car.third_party.company_name})`
+                      : car.third_party?.name || "-"}
+                  </p>
+                )}
                 <p className="text-xs uppercase tracking-wide text-ink/50">
                   {car.active ? "Aktiv" : "Inaktiv"}
                 </p>
@@ -274,7 +339,6 @@ export default function AdminCarsPage() {
             ))}
           </div>
         </div>
-      </section>
-    </main>
+    </section>
   );
 }

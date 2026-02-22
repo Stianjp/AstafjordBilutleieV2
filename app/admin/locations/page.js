@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Navbar from "../../components/Navbar";
 import { supabase } from "../../../lib/supabaseClient";
 
 export default function AdminLocationsPage() {
@@ -57,9 +56,7 @@ export default function AdminLocationsPage() {
   }, []);
 
   return (
-    <main className="min-h-screen">
-      <Navbar />
-      <section className="mx-auto w-full max-w-5xl px-6 pb-16 pt-6">
+    <section className="mx-auto w-full max-w-5xl px-6 pb-16 pt-6">
         <h1 className="font-display text-3xl">Admin: lokasjoner</h1>
         {message && <p className="mt-3 text-sm text-coral">{message}</p>}
         <div className="mt-6 grid gap-4">
@@ -109,7 +106,6 @@ export default function AdminLocationsPage() {
         >
           Lagre endringer
         </button>
-      </section>
-    </main>
+    </section>
   );
 }

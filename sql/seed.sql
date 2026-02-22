@@ -12,7 +12,7 @@ values
   ('Bardufoss Airport', 0, 0)
 on conflict (name) do nothing;
 
-insert into cars (reg_number, model, image_url, seats, transmission, fuel, daily_price, monthly_price_cap, current_location_id, current_km, active)
+insert into cars (reg_number, model, image_url, seats, transmission, fuel, daily_price, monthly_price_cap, current_location_id, has_navigation, owned_by_third_party, third_party_id, current_km, active)
 select
   reg_number,
   model,
@@ -23,6 +23,9 @@ select
   daily_price,
   monthly_price_cap,
   (select id from locations where name = 'Lavangen'),
+  true,
+  false,
+  null,
   current_km,
   true
 from (values

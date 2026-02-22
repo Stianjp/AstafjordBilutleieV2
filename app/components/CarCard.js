@@ -31,6 +31,15 @@ function FuelIcon() {
   );
 }
 
+function NavigationIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-3.5 w-3.5" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M12 3 4 7v10l8 4 8-4V7l-8-4Z" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="m12 8 3 4-4 1 1-5Z" />
+    </svg>
+  );
+}
+
 export default function CarCard({ car, onReserve, showReserve }) {
   return (
     <div className="group gradient-card rounded-3xl p-5 shadow-card transition duration-300 hover:-translate-y-0.5 hover:shadow-xl">
@@ -60,6 +69,12 @@ export default function CarCard({ car, onReserve, showReserve }) {
               <span>{car.fuel}</span>
             </span>
           </div>
+          {car.has_navigation && (
+            <p className="mt-1 inline-flex items-center gap-1 text-xs text-ink/65">
+              <span className="scale-90"><NavigationIcon /></span>
+              <span>Navigasjon</span>
+            </p>
+          )}
           {car.isUnavailable && (
             <p className="mt-1 text-xs uppercase tracking-wide text-coral">Opptatt i valgt periode</p>
           )}

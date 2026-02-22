@@ -11,16 +11,16 @@ export async function GET(request) {
   }
 
   const { data, error } = await supabaseService
-    .from("cars")
-    .select("*, locations:current_location_id(*), third_party:third_party_id(*)")
-    .order("model", { ascending: true });
+    .from("third_parties")
+    .select("*")
+    .order("name", { ascending: true });
 
   if (error) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
   return Response.json(
-    { cars: data },
+    { third_parties: data },
     {
       headers: {
         "Cache-Control": "no-store"
@@ -36,25 +36,22 @@ export async function POST(request) {
   }
 
   const payload = await request.json();
-  if (payload.owned_by_third_party && !payload.third_party_id) {
-    return Response.json({ error: "Velg tredjepart for bilen." }, { status: 400 });
+  const name = payload.name ? payload.name.trim() : "";
+  const companyName = payload.company_name ? payload.company_name.trim() : "";
+  const email = payload.email ? payload.email.trim() : "";
+  const phone = payload.phone ? payload.phone.trim() : "";
+
+  if (!name || !email || !phone) {
+    return Response.json({ error: "Mangler felter" }, { status: 400 });
   }
+
   const { data, error } = await supabaseService
-    .from("cars")
+    .from("third_parties")
     .insert({
-      reg_number: payload.reg_number,
-      model: payload.model,
-      image_url: payload.image_url || null,
-      seats: payload.seats,
-      transmission: payload.transmission,
-      fuel: payload.fuel,
-      daily_price: payload.daily_price,
-      monthly_price_cap: payload.monthly_price_cap,
-      current_location_id: payload.current_location_id,
-      has_navigation: payload.has_navigation ?? true,
-      owned_by_third_party: payload.owned_by_third_party ?? false,
-      third_party_id: payload.owned_by_third_party ? payload.third_party_id || null : null,
-      current_km: payload.current_km || 0,
+      name,
+      company_name: companyName || null,
+      email,
+      phone,
       active: payload.active ?? true
     })
     .select("*")
@@ -64,5 +61,5 @@ export async function POST(request) {
     return Response.json({ error: error.message }, { status: 500 });
   }
 
-  return Response.json({ car: data });
+  return Response.json({ third_party: data });
 }

@@ -112,6 +112,12 @@ export default function HomePage() {
 
   const selectedPickup = locations.find((loc) => loc.id === pickupLocation);
   const selectedDelivery = locations.find((loc) => loc.id === deliveryLocation);
+  const selectedThirdParty = selectedCar?.third_party || null;
+  const selectedThirdPartyName = selectedThirdParty
+    ? (selectedThirdParty.company_name
+      ? `${selectedThirdParty.name} (${selectedThirdParty.company_name})`
+      : selectedThirdParty.name)
+    : "";
 
   const pricePreview = useMemo(() => {
     if (!selectedCar || !startDate || !endDate || !selectedPickup || !selectedDelivery) {
@@ -668,10 +674,17 @@ export default function HomePage() {
               <div className="mt-4 space-y-4 text-sm">
                 <p className="font-semibold">{t.contract.title}</p>
                 <div className="rounded-2xl bg-white/70 p-6 text-sm">
-                  <p>{t.contract.intro}</p>
+                  <p>
+                    {selectedThirdParty
+                      ? t.contract.introThirdParty.replace("{thirdParty}", selectedThirdPartyName)
+                      : t.contract.intro}
+                  </p>
                   <p>{t.contract.name}: {customer.first_name} {customer.last_name}</p>
                   <p>{t.contract.email}: {customer.email}</p>
                   <p>{t.contract.phone}: {customer.phone}</p>
+                  {selectedThirdParty && (
+                    <p>{t.contract.onBehalfOf}: {selectedThirdPartyName}</p>
+                  )}
                   <p>{t.contract.pickup}: {selectedPickup?.name || "-"}</p>
                   <p>{t.contract.delivery}: {selectedDelivery?.name || "-"}</p>
                   <p>{t.contract.start}: {startDate || "-"} {t.contract.timePrefix} {startTime}</p>

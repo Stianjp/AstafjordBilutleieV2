@@ -7,6 +7,16 @@ create table if not exists locations (
   pickup_fee numeric not null default 0
 );
 
+create table if not exists third_parties (
+  id uuid primary key default uuid_generate_v4(),
+  name text not null,
+  company_name text,
+  email text not null,
+  phone text not null,
+  active boolean not null default true,
+  created_at timestamp with time zone default now()
+);
+
 create table if not exists cars (
   id uuid primary key default uuid_generate_v4(),
   reg_number text not null unique,
@@ -18,9 +28,21 @@ create table if not exists cars (
   daily_price numeric not null,
   monthly_price_cap numeric not null,
   current_location_id uuid references locations(id),
+  has_navigation boolean not null default true,
+  owned_by_third_party boolean not null default false,
+  third_party_id uuid references third_parties(id),
   current_km numeric not null default 0,
   active boolean not null default true
 );
+
+alter table if exists cars
+  add column if not exists has_navigation boolean not null default true;
+
+alter table if exists cars
+  add column if not exists owned_by_third_party boolean not null default false;
+
+alter table if exists cars
+  add column if not exists third_party_id uuid references third_parties(id);
 
 create table if not exists customers (
   id uuid primary key default uuid_generate_v4(),

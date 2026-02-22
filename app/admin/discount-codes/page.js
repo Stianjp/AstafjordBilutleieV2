@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Navbar from "../../components/Navbar";
 import { supabase } from "../../../lib/supabaseClient";
 
 const emptyForm = {
@@ -154,9 +153,7 @@ export default function AdminDiscountCodesPage() {
   };
 
   return (
-    <main className="min-h-screen">
-      <Navbar />
-      <section className="mx-auto w-full max-w-6xl px-6 pb-16 pt-6">
+    <section className="mx-auto w-full max-w-6xl px-6 pb-16 pt-6">
         <h1 className="font-display text-3xl">Admin: rabattkoder</h1>
         {message && <p className="mt-3 text-sm text-coral">{message}</p>}
         <div className="mt-6 grid gap-6 lg:grid-cols-[0.7fr_1.3fr]">
@@ -308,7 +305,6 @@ export default function AdminDiscountCodesPage() {
             )}
           </div>
         </div>
-      </section>
-    </main>
+    </section>
   );
 }
