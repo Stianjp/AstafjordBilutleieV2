@@ -138,6 +138,16 @@ export async function POST(request) {
     return Response.json({ error: "Bilen er ikke tilgjengelig" }, { status: 400 });
   }
 
+  let thirdParty = car.third_party || null;
+  if (car.owned_by_third_party && !thirdParty && car.third_party_id) {
+    const { data: thirdPartyData } = await supabaseService
+      .from("third_parties")
+      .select("*")
+      .eq("id", car.third_party_id)
+      .maybeSingle();
+    thirdParty = thirdPartyData || null;
+  }
+
   const { data: conflicts, error: conflictError } = await supabaseService
     .from("bookings")
     .select("id")
@@ -275,9 +285,10 @@ export async function POST(request) {
   await sendBookingEmails({
     customer,
     booking,
-    car,
+    car: { ...car, third_party: thirdParty },
     pickup: pickupLocation,
-    delivery: deliveryLocation
+    delivery: deliveryLocation,
+    thirdParty
   });
 
   if (discountResult.discountCodeId) {
