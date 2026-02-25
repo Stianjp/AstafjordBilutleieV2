@@ -218,6 +218,12 @@ export default function AdminCarsPage() {
                 className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
                 required
               />
+              <p className="mt-2 text-xs text-ink/60">
+                Sett til 0 hvis mnd prisloft ikke skal brukes.
+              </p>
+              <p className="mt-1 text-xs text-ink/60">
+                Da brukes kun dagspris for hele perioden (dagpris × antall dager).
+              </p>
             </div>
             <div className="mt-4">
               <label className="text-sm">Lokasjon</label>
