@@ -7,6 +7,7 @@ const emptyForm = {
   code: "",
   type: "percent",
   value: "",
+  minimum_days: "",
   active: true,
   starts_at: "",
   ends_at: "",
@@ -29,6 +30,11 @@ const formatDateShort = (value) => {
   return `${day}.${month} ${year}`;
 };
 
+const formatNumber = (value, decimals = 2) => Number(value || 0).toLocaleString("nb-NO", {
+  minimumFractionDigits: decimals,
+  maximumFractionDigits: decimals
+});
+
 export default function AdminDiscountCodesPage() {
   const [codes, setCodes] = useState([]);
   const [codeBookings, setCodeBookings] = useState({});
@@ -37,6 +43,13 @@ export default function AdminDiscountCodesPage() {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [message, setMessage] = useState("");
+  const isMonthlyFixedType = form.type === "monthly_fixed";
+  const monthlyEquivalentDaily = isMonthlyFixedType && Number(form.value || 0) > 0
+    ? Number(form.value) / 30
+    : null;
+  const monthlyMinimumDays = isMonthlyFixedType
+    ? Number(form.minimum_days || 0)
+    : 0;
 
   const loadCodes = async () => {
     const { data } = await supabase.auth.getSession();
@@ -73,6 +86,7 @@ export default function AdminDiscountCodesPage() {
       code: form.code,
       type: form.type,
       value: Number(form.value),
+      minimum_days: form.minimum_days === "" ? 0 : Number(form.minimum_days),
       active: form.active,
       starts_at: form.starts_at || null,
       ends_at: form.ends_at || null,
@@ -106,6 +120,7 @@ export default function AdminDiscountCodesPage() {
       code: code.code || "",
       type: code.type || "percent",
       value: code.value ?? "",
+      minimum_days: code.minimum_days ?? "",
       active: code.active ?? true,
       starts_at: code.starts_at || "",
       ends_at: code.ends_at || "",
@@ -174,24 +189,57 @@ export default function AdminDiscountCodesPage() {
                 <label className="text-sm">Type</label>
                 <select
                   value={form.type}
-                  onChange={(event) => setForm({ ...form, type: event.target.value })}
+                  onChange={(event) => {
+                    const nextType = event.target.value;
+                    setForm({
+                      ...form,
+                      type: nextType,
+                      minimum_days: nextType === "monthly_fixed"
+                        ? (form.minimum_days === "" ? 30 : form.minimum_days)
+                        : ""
+                    });
+                  }}
                   className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
                 >
                   <option value="percent">Prosent</option>
                   <option value="amount">Beløp</option>
+                  <option value="monthly_fixed">Mnd fastpris</option>
                 </select>
               </div>
               <div>
-                <label className="text-sm">Verdi</label>
+                <label className="text-sm">{isMonthlyFixedType ? "Mnd pris (NOK)" : "Verdi"}</label>
                 <input
                   type="number"
                   value={form.value}
                   onChange={(event) => setForm({ ...form, value: event.target.value })}
                   className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                  placeholder={isMonthlyFixedType ? "Mnd pris" : ""}
                   required
                 />
+                {isMonthlyFixedType && monthlyEquivalentDaily != null && (
+                  <p className="mt-2 text-xs text-ink/60">
+                    Dagspris med denne koden: {formatNumber(monthlyEquivalentDaily)} kr per dag.
+                  </p>
+                )}
               </div>
             </div>
+            {isMonthlyFixedType && (
+              <div className="mt-4">
+                <label className="text-sm">Gjelder fra antall dager</label>
+                <input
+                  type="number"
+                  value={form.minimum_days}
+                  onChange={(event) => setForm({ ...form, minimum_days: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                  placeholder="30"
+                  min={1}
+                  required
+                />
+                <p className="mt-2 text-xs text-ink/60">
+                  Koden brukes kun for bookinger pa eller over {monthlyMinimumDays || 0} dager.
+                </p>
+              </div>
+            )}
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               <div>
                 <label className="text-sm">Startdato</label>
@@ -259,8 +307,17 @@ export default function AdminDiscountCodesPage() {
               <div key={code.id} className="gradient-card rounded-2xl p-4 shadow-card">
                 <p className="font-medium">{code.code}</p>
                 <p className="text-sm text-ink/70">
-                  {code.type === "percent" ? `${code.value}%` : `${code.value} kr`}
+                  {code.type === "percent"
+                    ? `${code.value}%`
+                    : code.type === "monthly_fixed"
+                      ? `${code.value} kr / mnd`
+                      : `${code.value} kr`}
                 </p>
+                {code.type === "monthly_fixed" && (
+                  <p className="text-xs text-ink/60">
+                    Dagspris: {formatNumber(Number(code.value || 0) / 30)} kr • Gjelder fra {code.minimum_days || 0} dager
+                  </p>
+                )}
                 <p className="text-sm text-ink/60">
                   Aktiv: {code.active ? "Ja" : "Nei"}
                 </p>

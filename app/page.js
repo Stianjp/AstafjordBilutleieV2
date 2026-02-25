@@ -162,8 +162,16 @@ export default function HomePage() {
     if (discountInfo?.valid) {
       if (discountInfo.type === "percent") {
         discountAmount = (totalBeforeDiscount * Number(discountInfo.value)) / 100;
-      } else {
+      } else if (discountInfo.type === "amount") {
         discountAmount = Number(discountInfo.value);
+      } else if (discountInfo.type === "monthly_fixed") {
+        const minimumDays = Number(discountInfo.minimum_days || 0);
+        if (days >= minimumDays) {
+          const monthlyPrice = Number(discountInfo.value || 0);
+          const equivalentDailyPrice = monthlyPrice / 30;
+          const adjustedBasePrice = equivalentDailyPrice * days;
+          discountAmount = Math.max(0, basePrice - adjustedBasePrice);
+        }
       }
       discountAmount = Math.max(0, Math.min(totalBeforeDiscount, discountAmount));
     }
@@ -259,7 +267,7 @@ export default function HomePage() {
         end_date: endDate,
         end_time: endTime,
         terms_accepted: termsAccepted,
-        discount_code: discountInfo?.valid ? discountInfo.code : null,
+        discount_code: discountInfo?.valid && discountInfo?.eligible !== false ? discountInfo.code : null,
         child_seat_required: childSeatSelected,
         child_seat_fee: childSeatSelected ? childSeatFee : 0,
         deductible_reduction_selected: deductibleReductionSelected,
@@ -306,17 +314,19 @@ export default function HomePage() {
       setDiscountMessage(t.labels.discountInvalid);
       return;
     }
+    const days = startDate && endDate ? calculateDays(startDate, endDate) : null;
+    const daysQuery = days && days > 0 ? `&days=${days}` : "";
     setDiscountLoading(true);
     setDiscountMessage("");
     try {
-      const response = await fetch(`/api/discount-codes?code=${encodeURIComponent(code)}`, { cache: "no-store" });
+      const response = await fetch(`/api/discount-codes?code=${encodeURIComponent(code)}${daysQuery}`, { cache: "no-store" });
       const data = await response.json();
       if (!response.ok || !data.valid) {
         setDiscountInfo(null);
         setDiscountMessage(data.message || t.labels.discountInvalid);
       } else {
         setDiscountInfo(data);
-        setDiscountMessage(t.labels.discountApplied);
+        setDiscountMessage(data.message || t.labels.discountApplied);
       }
     } catch {
       setDiscountInfo(null);
@@ -674,7 +684,7 @@ export default function HomePage() {
                         </button>
                       </div>
                       {discountMessage && (
-                        <p className={`mt-2 text-xs ${discountInfo?.valid ? "text-tide" : "text-coral"}`}>
+                        <p className={`mt-2 text-xs ${discountInfo?.valid && discountInfo?.eligible !== false ? "text-tide" : "text-coral"}`}>
                           {discountMessage}
                         </p>
                       )}

@@ -13,6 +13,8 @@ const parseDateOnly = (value) => {
 export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const codeParam = searchParams.get("code");
+  const daysParam = searchParams.get("days");
+  const days = daysParam == null ? null : Number(daysParam);
   const code = codeParam ? codeParam.trim().toUpperCase() : "";
 
   if (!code) {
@@ -48,12 +50,22 @@ export async function GET(request) {
     return Response.json({ valid: false, message: "Rabattkode er brukt opp" }, { status: 400 });
   }
 
+  const minimumDays = Number(discount.minimum_days || 0);
+  const eligible = days == null || Number.isNaN(days) ? true : days >= minimumDays;
+  const equivalentDailyPrice = discount.type === "monthly_fixed"
+    ? Number(discount.value || 0) / 30
+    : null;
+
   return Response.json(
     {
       valid: true,
       code: discount.code,
       type: discount.type,
-      value: discount.value
+      value: discount.value,
+      minimum_days: minimumDays,
+      eligible,
+      message: eligible ? null : `Rabattkoden gjelder fra ${minimumDays} dager`,
+      equivalent_daily_price: equivalentDailyPrice
     },
     {
       headers: {

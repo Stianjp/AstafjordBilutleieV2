@@ -96,8 +96,9 @@ alter table if exists bookings
 create table if not exists discount_codes (
   id uuid primary key default uuid_generate_v4(),
   code text not null unique,
-  type text not null check (type in ('percent', 'amount')),
+  type text not null check (type in ('percent', 'amount', 'monthly_fixed')),
   value numeric not null,
+  minimum_days integer not null default 0,
   active boolean not null default true,
   starts_at date,
   ends_at date,
@@ -105,6 +106,15 @@ create table if not exists discount_codes (
   used_count integer not null default 0,
   created_at timestamp with time zone default now()
 );
+
+alter table if exists discount_codes
+  add column if not exists minimum_days integer not null default 0;
+
+alter table if exists discount_codes
+  drop constraint if exists discount_codes_type_check;
+
+alter table if exists discount_codes
+  add constraint discount_codes_type_check check (type in ('percent', 'amount', 'monthly_fixed'));
 
 create table if not exists add_ons (
   id uuid primary key default uuid_generate_v4(),

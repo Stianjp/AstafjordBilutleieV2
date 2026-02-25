@@ -15,7 +15,7 @@ const parseDateOnly = (value) => {
   return new Date(year, month - 1, day);
 };
 
-const resolveDiscount = async (code, totalBeforeDiscount) => {
+const resolveDiscount = async ({ code, totalBeforeDiscount, basePrice, days }) => {
   if (!code) return { discountAmount: 0, discountCode: null, discountCodeId: null };
   const normalized = code.trim().toUpperCase();
   if (!normalized) return { discountAmount: 0, discountCode: null, discountCodeId: null };
@@ -49,17 +49,42 @@ const resolveDiscount = async (code, totalBeforeDiscount) => {
     return { discountAmount: 0, discountCode: null, discountCodeId: null, error: "Rabattkode er brukt opp" };
   }
 
+  const minimumDays = Number(discount.minimum_days || 0);
+  const safeTotalBeforeDiscount = Number(totalBeforeDiscount || 0);
+  const safeBasePrice = Number(basePrice || 0);
+  const safeDays = Number(days || 0);
   let discountAmount = 0;
-  if (discount.type === "percent") {
-    discountAmount = (Number(totalBeforeDiscount) * Number(discount.value)) / 100;
+  let adjustedBasePrice = null;
+
+  if (discount.type === "monthly_fixed") {
+    if (safeDays < minimumDays) {
+      return {
+        discountAmount: 0,
+        adjustedBasePrice: null,
+        minimumDays,
+        discountCode: null,
+        discountCodeId: null,
+        usedCount: 0
+      };
+    }
+
+    const monthlyPrice = Number(discount.value || 0);
+    const equivalentDailyPrice = monthlyPrice / 30;
+    adjustedBasePrice = equivalentDailyPrice * safeDays;
+    const baseDiscountAmount = Math.max(0, safeBasePrice - adjustedBasePrice);
+    discountAmount = Math.max(0, Math.min(safeTotalBeforeDiscount, baseDiscountAmount));
+  } else if (discount.type === "percent") {
+    discountAmount = (safeTotalBeforeDiscount * Number(discount.value)) / 100;
+    discountAmount = Math.max(0, Math.min(safeTotalBeforeDiscount, discountAmount));
   } else {
     discountAmount = Number(discount.value);
+    discountAmount = Math.max(0, Math.min(safeTotalBeforeDiscount, discountAmount));
   }
-
-  discountAmount = Math.max(0, Math.min(Number(totalBeforeDiscount), discountAmount));
 
   return {
     discountAmount,
+    adjustedBasePrice,
+    minimumDays,
     discountCode: discount.code,
     discountCodeId: discount.id,
     usedCount: discount.used_count || 0
@@ -204,12 +229,20 @@ export async function POST(request) {
   const monthlyCap = Number(car.monthly_price_cap);
   const basePrice = calculateFinalPrice(days, dailyPrice, monthlyCap);
   const totalBeforeDiscount = basePrice + deliveryFee + pickupFee;
-  const discountResult = await resolveDiscount(payload.discount_code, totalBeforeDiscount);
+  const discountResult = await resolveDiscount({
+    code: payload.discount_code,
+    totalBeforeDiscount,
+    basePrice,
+    days
+  });
   if (discountResult.error) {
     return Response.json({ error: discountResult.error }, { status: 400 });
   }
-  const calculatedPrice = totalBeforeDiscount
-    - discountResult.discountAmount
+  const subtotalAfterDiscount = discountResult.adjustedBasePrice != null
+    ? Number(discountResult.adjustedBasePrice) + deliveryFee + pickupFee
+    : totalBeforeDiscount - discountResult.discountAmount;
+  const actualDiscountAmount = Math.max(0, totalBeforeDiscount - subtotalAfterDiscount);
+  const calculatedPrice = subtotalAfterDiscount
     + childSeatFee
     + deductibleReductionFee;
 
@@ -285,7 +318,7 @@ export async function POST(request) {
       customer_comment: payload.customer_comment || null,
       discount_code_id: discountResult.discountCodeId,
       discount_code: discountResult.discountCode,
-      discount_amount: discountResult.discountAmount,
+      discount_amount: actualDiscountAmount,
       calculated_price: calculatedPrice,
       status: "pending",
       terms_accepted: payload.terms_accepted
