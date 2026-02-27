@@ -172,7 +172,11 @@ export async function PUT(request, { params }) {
         first_name: payload.customer.first_name ?? booking.customers?.first_name ?? null,
         last_name: payload.customer.last_name ?? booking.customers?.last_name ?? null,
         email: payload.customer.email ?? booking.customers?.email ?? null,
-        phone: payload.customer.phone ?? booking.customers?.phone ?? null
+        phone: payload.customer.phone ?? booking.customers?.phone ?? null,
+        address_line_1: payload.customer.address_line_1 ?? booking.customers?.address_line_1 ?? null,
+        address_line_2: payload.customer.address_line_2 ?? booking.customers?.address_line_2 ?? null,
+        postal_code: payload.customer.postal_code ?? booking.customers?.postal_code ?? null,
+        region: payload.customer.region ?? booking.customers?.region ?? null
       })
       .eq("id", updated.customer_id);
   }

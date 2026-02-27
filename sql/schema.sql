@@ -51,10 +51,26 @@ create table if not exists customers (
   last_name text not null,
   email text not null,
   phone text not null,
+  address_line_1 text,
+  address_line_2 text,
+  postal_code text,
+  region text,
   org_number text,
   invoice_method text,
   invoice_email text
 );
+
+alter table if exists customers
+  add column if not exists address_line_1 text;
+
+alter table if exists customers
+  add column if not exists address_line_2 text;
+
+alter table if exists customers
+  add column if not exists postal_code text;
+
+alter table if exists customers
+  add column if not exists region text;
 
 create table if not exists bookings (
   id uuid primary key default uuid_generate_v4(),

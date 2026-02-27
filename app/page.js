@@ -12,6 +12,10 @@ const emptyCustomer = {
   last_name: "",
   email: "",
   phone: "",
+  address_line_1: "",
+  address_line_2: "",
+  postal_code: "",
+  region: "",
   org_number: "",
   invoice_method: "",
   invoice_email: "",
@@ -47,6 +51,8 @@ export default function HomePage() {
   const [childSeatFee, setChildSeatFee] = useState(300);
   const [deductibleReductionDailyFee, setDeductibleReductionDailyFee] = useState(200);
   const [deductibleReductionSelected, setDeductibleReductionSelected] = useState(false);
+  const [postalLookupLoading, setPostalLookupLoading] = useState(false);
+  const [postalLookupMessage, setPostalLookupMessage] = useState("");
   const [addOnAvailability, setAddOnAvailability] = useState({
     child_seat: true,
     deductible_reduction: true
@@ -228,7 +234,18 @@ export default function HomePage() {
       setMessage(t.bookingFlow.carRequired);
       return;
     }
-    if (step === 4 && (!customer.first_name || !customer.last_name || !customer.email || !customer.phone)) {
+    if (
+      step === 4
+      && (
+        !customer.first_name
+        || !customer.last_name
+        || !customer.email
+        || !customer.phone
+        || !customer.address_line_1
+        || !customer.postal_code
+        || !customer.region
+      )
+    ) {
       setMessage(t.bookingFlow.customerRequired);
       return;
     }
@@ -296,6 +313,8 @@ export default function HomePage() {
       setDiscountInfo(null);
       setDiscountMessage("");
       setShowDiscount(false);
+      setPostalLookupMessage("");
+      setPostalLookupLoading(false);
       setShowRequest(false);
       setChildSeatSelected(false);
       setOtherRequestSelected(false);
@@ -333,6 +352,31 @@ export default function HomePage() {
       setDiscountMessage(t.labels.discountInvalid);
     }
     setDiscountLoading(false);
+  };
+
+  const lookupRegionByPostalCode = async (postalCodeValue) => {
+    const normalized = String(postalCodeValue || "").replace(/\s+/g, "");
+    if (!/^\d{4}$/.test(normalized)) {
+      return;
+    }
+
+    setPostalLookupLoading(true);
+    setPostalLookupMessage("");
+    try {
+      const response = await fetch(`/api/postal-lookup?postal_code=${encodeURIComponent(normalized)}`, {
+        cache: "no-store"
+      });
+      const data = await response.json();
+      if (response.ok && data.found && data.region) {
+        setCustomer((prev) => ({ ...prev, region: data.region }));
+        setPostalLookupMessage(t.labels.regionAutoFilled);
+      } else {
+        setPostalLookupMessage(t.labels.regionNotFound);
+      }
+    } catch {
+      setPostalLookupMessage(t.labels.regionNotFound);
+    }
+    setPostalLookupLoading(false);
   };
 
   return (
@@ -595,6 +639,40 @@ export default function HomePage() {
                   onChange={(event) => setCustomer({ ...customer, phone: event.target.value })}
                   className="rounded-xl border border-ink/20 bg-white/70 p-3"
                 />
+                <input
+                  placeholder={t.labels.address1}
+                  value={customer.address_line_1}
+                  onChange={(event) => setCustomer({ ...customer, address_line_1: event.target.value })}
+                  className="rounded-xl border border-ink/20 bg-white/70 p-3"
+                />
+                <input
+                  placeholder={t.labels.address2}
+                  value={customer.address_line_2}
+                  onChange={(event) => setCustomer({ ...customer, address_line_2: event.target.value })}
+                  className="rounded-xl border border-ink/20 bg-white/70 p-3"
+                />
+                <input
+                  placeholder={t.labels.postalCode}
+                  value={customer.postal_code}
+                  onChange={(event) => {
+                    const postalCode = event.target.value;
+                    setCustomer({ ...customer, postal_code: postalCode });
+                    setPostalLookupMessage("");
+                  }}
+                  onBlur={() => lookupRegionByPostalCode(customer.postal_code)}
+                  className="rounded-xl border border-ink/20 bg-white/70 p-3"
+                />
+                <input
+                  placeholder={t.labels.region}
+                  value={customer.region}
+                  onChange={(event) => setCustomer({ ...customer, region: event.target.value })}
+                  className="rounded-xl border border-ink/20 bg-white/70 p-3"
+                />
+                {(postalLookupLoading || postalLookupMessage) && (
+                  <p className={`text-xs ${postalLookupLoading ? "text-ink/60" : "text-tide"}`}>
+                    {postalLookupLoading ? "Sjekker postkode..." : postalLookupMessage}
+                  </p>
+                )}
                 {customer.type === "company" && (
                   <div className="grid gap-3">
                     <input
@@ -727,6 +805,10 @@ export default function HomePage() {
                   <p>{t.contract.name}: {customer.first_name} {customer.last_name}</p>
                   <p>{t.contract.email}: {customer.email}</p>
                   <p>{t.contract.phone}: {customer.phone}</p>
+                  <p>{t.contract.address1}: {customer.address_line_1 || "-"}</p>
+                  {customer.address_line_2 ? <p>{t.contract.address2}: {customer.address_line_2}</p> : null}
+                  <p>{t.contract.postalCode}: {customer.postal_code || "-"}</p>
+                  <p>{t.contract.region}: {customer.region || "-"}</p>
                   {selectedThirdParty && (
                     <p>{t.contract.onBehalfOf}: {selectedThirdPartyName}</p>
                   )}

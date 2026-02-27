@@ -23,6 +23,10 @@ export default function AdminBookingDetail() {
     customer_last_name: "",
     customer_email: "",
     customer_phone: "",
+    customer_address_line_1: "",
+    customer_address_line_2: "",
+    customer_postal_code: "",
+    customer_region: "",
     customer_comment: "",
     child_seat_required: false,
     child_seat_fee: 300,
@@ -80,6 +84,10 @@ export default function AdminBookingDetail() {
       customer_last_name: bookingData.booking.customers.last_name || "",
       customer_email: bookingData.booking.customers.email || "",
       customer_phone: bookingData.booking.customers.phone || "",
+      customer_address_line_1: bookingData.booking.customers.address_line_1 || "",
+      customer_address_line_2: bookingData.booking.customers.address_line_2 || "",
+      customer_postal_code: bookingData.booking.customers.postal_code || "",
+      customer_region: bookingData.booking.customers.region || "",
       customer_comment: bookingData.booking.customer_comment || "",
       child_seat_required: bookingData.booking.child_seat_required || false,
       child_seat_fee: bookingData.booking.child_seat_fee ?? 300,
@@ -117,7 +125,11 @@ export default function AdminBookingDetail() {
           first_name: form.customer_first_name,
           last_name: form.customer_last_name,
           email: form.customer_email,
-          phone: form.customer_phone
+          phone: form.customer_phone,
+          address_line_1: form.customer_address_line_1,
+          address_line_2: form.customer_address_line_2,
+          postal_code: form.customer_postal_code,
+          region: form.customer_region
         },
         customer_comment: form.customer_comment,
         child_seat_required: form.child_seat_required,
@@ -195,6 +207,38 @@ export default function AdminBookingDetail() {
                 <input
                   value={form.customer_phone}
                   onChange={(event) => setForm({ ...form, customer_phone: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                />
+              </div>
+              <div>
+                <label className="text-sm">Adresse</label>
+                <input
+                  value={form.customer_address_line_1}
+                  onChange={(event) => setForm({ ...form, customer_address_line_1: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                />
+              </div>
+              <div>
+                <label className="text-sm">Adresse 2</label>
+                <input
+                  value={form.customer_address_line_2}
+                  onChange={(event) => setForm({ ...form, customer_address_line_2: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                />
+              </div>
+              <div>
+                <label className="text-sm">Postkode</label>
+                <input
+                  value={form.customer_postal_code}
+                  onChange={(event) => setForm({ ...form, customer_postal_code: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                />
+              </div>
+              <div>
+                <label className="text-sm">Region</label>
+                <input
+                  value={form.customer_region}
+                  onChange={(event) => setForm({ ...form, customer_region: event.target.value })}
                   className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
                 />
               </div>

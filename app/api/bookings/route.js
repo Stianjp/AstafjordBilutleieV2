@@ -112,7 +112,15 @@ export async function POST(request) {
     }
   }
 
-  if (!payload.customer.email || !payload.customer.first_name || !payload.customer.last_name || !payload.customer.phone) {
+  if (
+    !payload.customer.email
+    || !payload.customer.first_name
+    || !payload.customer.last_name
+    || !payload.customer.phone
+    || !payload.customer.address_line_1
+    || !payload.customer.postal_code
+    || !payload.customer.region
+  ) {
     return Response.json({ error: "Missing customer info" }, { status: 400 });
   }
 
@@ -263,6 +271,10 @@ export async function POST(request) {
         last_name: payload.customer.last_name,
         email: payload.customer.email,
         phone: payload.customer.phone,
+        address_line_1: payload.customer.address_line_1,
+        address_line_2: payload.customer.address_line_2 || null,
+        postal_code: payload.customer.postal_code,
+        region: payload.customer.region,
         org_number: payload.customer.org_number || null,
         invoice_method: payload.customer.invoice_method || null,
         invoice_email: payload.customer.invoice_email || null
@@ -283,6 +295,10 @@ export async function POST(request) {
         first_name: payload.customer.first_name,
         last_name: payload.customer.last_name,
         phone: payload.customer.phone,
+        address_line_1: payload.customer.address_line_1,
+        address_line_2: payload.customer.address_line_2 || null,
+        postal_code: payload.customer.postal_code,
+        region: payload.customer.region,
         org_number: payload.customer.org_number || null,
         invoice_method: payload.customer.invoice_method || null,
         invoice_email: payload.customer.invoice_email || null
