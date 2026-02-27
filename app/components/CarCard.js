@@ -40,7 +40,8 @@ function NavigationIcon() {
   );
 }
 
-export default function CarCard({ car, onReserve, showReserve }) {
+export default function CarCard({ car, onReserve, showReserve, labels }) {
+  const ui = labels || {};
   return (
     <div className="group gradient-card rounded-3xl p-5 shadow-card transition duration-300 hover:-translate-y-0.5 hover:shadow-xl">
       <div className="relative mb-4 h-40 overflow-hidden rounded-2xl">
@@ -56,9 +57,9 @@ export default function CarCard({ car, onReserve, showReserve }) {
         <div className="min-w-0">
           <h3 className="font-display text-xl">{car.model}</h3>
           <div className="mt-1 flex items-center gap-2.5 whitespace-nowrap text-xs text-ink/70 sm:text-sm">
-            <span className="inline-flex shrink-0 items-center gap-1">
+              <span className="inline-flex shrink-0 items-center gap-1">
               <span className="scale-90"><SeatsIcon /></span>
-              <span>{car.seats} seter</span>
+              <span>{car.seats} {ui.seatsUnit || "seter"}</span>
             </span>
             <span className="inline-flex shrink-0 items-center gap-1">
               <span className="scale-90"><TransmissionIcon /></span>
@@ -72,16 +73,16 @@ export default function CarCard({ car, onReserve, showReserve }) {
           {car.has_navigation && (
             <p className="mt-1 inline-flex items-center gap-1 text-xs text-ink/65">
               <span className="scale-90"><NavigationIcon /></span>
-              <span>Navigasjon</span>
+              <span>{ui.navigation || "Navigasjon"}</span>
             </p>
           )}
           {car.isUnavailable && (
-            <p className="mt-1 text-xs uppercase tracking-wide text-coral">Opptatt i valgt periode</p>
+            <p className="mt-1 text-xs uppercase tracking-wide text-coral">{ui.unavailableInPeriod || "Opptatt i valgt periode"}</p>
           )}
         </div>
         <div className="shrink-0 text-right">
           <p className="whitespace-nowrap text-base font-semibold sm:text-lg">{car.daily_price} kr</p>
-          <p className="text-[11px] tracking-wide text-ink/60">Per dag</p>
+          <p className="text-[11px] tracking-wide text-ink/60">{ui.perDay || "Per dag"}</p>
         </div>
       </div>
       {showReserve && (
@@ -90,7 +91,7 @@ export default function CarCard({ car, onReserve, showReserve }) {
           disabled={!car.active || car.isUnavailable}
           className="mt-4 w-full rounded-full bg-tide px-4 py-2 text-sm uppercase tracking-wide text-white transition hover:bg-ink disabled:cursor-not-allowed disabled:bg-ink/40"
         >
-          Reserver bil
+          {ui.reserveCar || "Reserver bil"}
         </button>
       )}
     </div>

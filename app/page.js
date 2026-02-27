@@ -928,6 +928,7 @@ export default function HomePage() {
                   <CarCard
                     key={car.id}
                     car={{ ...car, isUnavailable }}
+                    labels={t.labels}
                     showReserve
                     onReserve={setSelectedCar}
                   />
