@@ -24,8 +24,8 @@ export default function HowToBookPage() {
   return (
     <main className="min-h-screen">
       <Navbar />
-      <section className="mx-auto w-full max-w-4xl px-6 pb-16 pt-6">
-        <h1 className="font-display text-4xl">{t.howToBook.title} {t.howToBook.car} {t.howToBook.withUs}</h1>
+      <section className="mx-auto w-full max-w-4xl px-4 pb-16 pt-6 sm:px-6">
+        <h1 className="font-display text-3xl sm:text-4xl">{t.howToBook.title} {t.howToBook.car} {t.howToBook.withUs}</h1>
 
         <div className="mt-8 grid gap-6">
           <div className="gradient-card rounded-3xl p-6 shadow-card">
@@ -68,7 +68,7 @@ export default function HowToBookPage() {
           </div>
         </section>
 
-        <div className="mt-10 rounded-3xl bg-ink px-6 py-8 text-white">
+        <div className="mt-10 rounded-3xl bg-ink px-5 py-8 sm:px-6 text-white">
           <p className="text-2xl font-display">{t.howToBook.easier} <span className="text-coral">{t.howToBook.itDoesntGet}</span></p>
         </div>
       </section>

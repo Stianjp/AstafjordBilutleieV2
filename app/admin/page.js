@@ -282,7 +282,7 @@ export default function AdminDashboard() {
   }, []);
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-6 pb-16 pt-6">
+    <section className="mx-auto w-full max-w-6xl px-4 pb-16 pt-6 sm:px-6">
       <h1 className="font-display text-3xl">Admin dashboard</h1>
       <p className="mt-2 text-sm text-ink/70">Oversikt over biler og bookingstatus.</p>
 

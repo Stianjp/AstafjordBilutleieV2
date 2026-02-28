@@ -100,10 +100,10 @@ export default function AdminAddOnsPage() {
   };
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-6 pb-16 pt-6">
+    <section className="mx-auto w-full max-w-6xl px-4 pb-16 pt-6 sm:px-6">
         <h1 className="font-display text-3xl">Admin: tilleggsutstyr</h1>
         {message && <p className="mt-3 text-sm text-coral">{message}</p>}
-        <div className="mt-6 grid gap-6 lg:grid-cols-[0.7fr_1.3fr]">
+        <div className="mt-6 grid gap-6 xl:grid-cols-[0.7fr_1.3fr]">
           <form onSubmit={handleSubmit} className="gradient-card rounded-3xl p-6 shadow-card">
             <h2 className="font-display text-xl">{editingId ? "Rediger tilleggsutstyr" : "Nytt tilleggsutstyr"}</h2>
             <div className="mt-4">

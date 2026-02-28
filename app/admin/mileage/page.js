@@ -182,7 +182,7 @@ export default function AdminMileagePage() {
   };
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-6 pb-16 pt-6">
+    <section className="mx-auto w-full max-w-6xl px-4 pb-16 pt-6 sm:px-6">
         <h1 className="font-display text-3xl">Admin: kjorebok</h1>
         <p className="mt-2 text-sm text-ink/70">Registrer start- og sluttkm og arsaken.</p>
         <div className="mt-6 gradient-card rounded-3xl p-6 shadow-card">

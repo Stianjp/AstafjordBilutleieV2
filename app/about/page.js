@@ -23,8 +23,8 @@ export default function AboutPage() {
   return (
     <main className="min-h-screen">
       <Navbar />
-      <section className="mx-auto w-full max-w-4xl px-6 pb-16 pt-6">
-        <h1 className="font-display text-4xl">{t.about.title}</h1>
+      <section className="mx-auto w-full max-w-4xl px-4 pb-16 pt-6 sm:px-6">
+        <h1 className="font-display text-3xl sm:text-4xl">{t.about.title}</h1>
         <p className="mt-4 text-ink/70">{t.about.intro}</p>
 
         <div className="mt-8 space-y-6">

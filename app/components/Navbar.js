@@ -49,10 +49,10 @@ export default function Navbar({ showBrand = true }) {
   };
 
   return (
-    <header className="border-b border-ink/15 bg-white/60 px-6 py-5 backdrop-blur-sm">
+    <header className="border-b border-ink/15 bg-white/60 px-4 py-4 sm:px-6 sm:py-5 backdrop-blur-sm">
       <nav className="mx-auto flex w-full max-w-6xl items-center justify-between">
         {showBrand ? (
-          <Link href={isAdminContext ? "/admin" : "/"} className="flex items-center gap-3 font-display text-2xl">
+          <Link href={isAdminContext ? "/admin" : "/"} className="flex items-center gap-2 font-display text-xl sm:gap-3 sm:text-2xl">
             Astafjord Bilutleie
           </Link>
         ) : (

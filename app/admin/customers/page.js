@@ -117,12 +117,12 @@ export default function AdminCustomersPage() {
   };
 
   return (
-    <section className="mx-auto w-full max-w-6xl px-6 pb-16 pt-6">
+    <section className="mx-auto w-full max-w-6xl px-4 pb-16 pt-6 sm:px-6">
       <h1 className="font-display text-3xl">Admin: kunder</h1>
       <p className="mt-2 text-sm text-ink/70">Sok opp kunde og oppdater kontaktinformasjon.</p>
       {message && <p className="mt-3 text-sm text-coral">{message}</p>}
 
-      <div className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
+      <div className="mt-6 grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
         <div className="rounded-3xl bg-white/70 p-4 shadow-card">
           <div className="flex gap-2">
             <input

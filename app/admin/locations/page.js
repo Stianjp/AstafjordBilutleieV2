@@ -56,7 +56,7 @@ export default function AdminLocationsPage() {
   }, []);
 
   return (
-    <section className="mx-auto w-full max-w-5xl px-6 pb-16 pt-6">
+    <section className="mx-auto w-full max-w-5xl px-4 pb-16 pt-6 sm:px-6">
         <h1 className="font-display text-3xl">Admin: lokasjoner</h1>
         {message && <p className="mt-3 text-sm text-coral">{message}</p>}
         <div className="mt-6 grid gap-4">

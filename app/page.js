@@ -408,7 +408,7 @@ export default function HomePage() {
   return (
     <main className="min-h-screen">
       <Navbar />
-      <section className="relative mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 pb-16 pt-4 lg:grid lg:grid-cols-[1.2fr_0.8fr]">
+      <section className="relative mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 pb-16 pt-4 sm:px-6 lg:grid lg:grid-cols-[1.2fr_0.8fr]">
         <aside className="relative order-1 lg:order-2" id="booking">
           <div className="blur-orb absolute right-0 top-0 h-40 w-40" />
           <div className="gradient-card relative rounded-3xl p-6 shadow-card">
@@ -964,7 +964,7 @@ export default function HomePage() {
           )}
         </div>
       </section>
-      <footer className="border-t border-ink/10 bg-white/60 px-6 py-10 text-sm">
+      <footer className="border-t border-ink/10 bg-white/60 px-4 py-10 sm:px-6 text-sm">
         <div className="mx-auto w-full max-w-6xl text-ink/70">
           <p>{t.footer.phone}</p>
           <p>{t.footer.contact}</p>

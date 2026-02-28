@@ -158,14 +158,14 @@ export default function AdminBookingDetail() {
 
   if (!booking) {
     return (
-      <section className="mx-auto w-full max-w-4xl px-6 pb-16 pt-6">
+      <section className="mx-auto w-full max-w-4xl px-4 pb-16 pt-6 sm:px-6">
         <p className="text-sm text-ink/70">{message || "Laster..."}</p>
       </section>
     );
   }
 
   return (
-    <section className="mx-auto w-full max-w-4xl px-6 pb-16 pt-6">
+    <section className="mx-auto w-full max-w-4xl px-4 pb-16 pt-6 sm:px-6">
         <button
           className="text-xs uppercase tracking-wide text-ink/60"
           onClick={() => router.back()}
