@@ -151,6 +151,72 @@ create table if not exists add_ons (
   created_at timestamp with time zone default now()
 );
 
+create table if not exists contract_settings (
+  id uuid primary key default uuid_generate_v4(),
+  language text not null unique check (language in ('no', 'en')),
+  intro text not null,
+  responsibility text not null,
+  obligations_title text not null,
+  obligations_lines text not null,
+  deductible_reduction_title text not null,
+  deductible_reduction_exceptions_intro text not null,
+  deductible_reduction_exception_lines text not null,
+  cancellation_policy_title text not null,
+  cancellation_policy_text text not null,
+  terms_title text not null,
+  terms_lines text not null,
+  updated_at timestamp with time zone not null default now(),
+  updated_by text
+);
+
+alter table if exists contract_settings
+  add column if not exists language text;
+
+alter table if exists contract_settings
+  add column if not exists intro text;
+
+alter table if exists contract_settings
+  add column if not exists responsibility text;
+
+alter table if exists contract_settings
+  add column if not exists obligations_title text;
+
+alter table if exists contract_settings
+  add column if not exists obligations_lines text;
+
+alter table if exists contract_settings
+  add column if not exists deductible_reduction_title text;
+
+alter table if exists contract_settings
+  add column if not exists deductible_reduction_exceptions_intro text;
+
+alter table if exists contract_settings
+  add column if not exists deductible_reduction_exception_lines text;
+
+alter table if exists contract_settings
+  add column if not exists cancellation_policy_title text;
+
+alter table if exists contract_settings
+  add column if not exists cancellation_policy_text text;
+
+alter table if exists contract_settings
+  add column if not exists terms_title text;
+
+alter table if exists contract_settings
+  add column if not exists terms_lines text;
+
+alter table if exists contract_settings
+  add column if not exists updated_at timestamp with time zone not null default now();
+
+alter table if exists contract_settings
+  add column if not exists updated_by text;
+
+alter table if exists contract_settings
+  drop constraint if exists contract_settings_language_check;
+
+alter table if exists contract_settings
+  add constraint contract_settings_language_check check (language in ('no', 'en'));
+
 create table if not exists mileage_logs (
   id uuid primary key default uuid_generate_v4(),
   booking_id uuid references bookings(id),

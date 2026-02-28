@@ -70,6 +70,8 @@ export default function HomePage() {
   }, []);
 
   const t = translations[language];
+  const [contractContent, setContractContent] = useState(t.contract);
+  const contractText = contractContent || t.contract;
   const currentYear = new Date().getFullYear();
 
   const loadData = async () => {
@@ -110,6 +112,29 @@ export default function HomePage() {
     loadData();
     loadAddOns();
   }, []);
+
+  useEffect(() => {
+    let active = true;
+    setContractContent(translations[language].contract);
+
+    const loadContractSettings = async () => {
+      try {
+        const response = await fetch(`/api/contract-settings?lang=${language}`, { cache: "no-store" });
+        const data = await response.json();
+        if (!response.ok || !data?.contract) return;
+        if (active) {
+          setContractContent(data.contract);
+        }
+      } catch {
+        // fallback to i18n defaults
+      }
+    };
+
+    loadContractSettings();
+    return () => {
+      active = false;
+    };
+  }, [language]);
 
   useEffect(() => {
     const fetchAvailability = async () => {
@@ -794,35 +819,35 @@ export default function HomePage() {
 
             {step === 5 && (
               <div className="mt-4 space-y-4 text-sm">
-                <p className="font-semibold">{t.contract.title}</p>
+                <p className="font-semibold">{contractText.title}</p>
                 <div className="rounded-2xl bg-white/70 p-6 text-sm">
                   <p>
                     {selectedThirdParty
-                      ? t.contract.introThirdParty
+                      ? contractText.introThirdParty
                         .replace("{thirdParty}", selectedThirdPartyName)
                         .replace("{phone}", selectedThirdParty.phone || "-")
-                      : t.contract.intro}
+                      : contractText.intro}
                   </p>
-                  <p>{t.contract.name}: {customer.first_name} {customer.last_name}</p>
-                  <p>{t.contract.email}: {customer.email}</p>
-                  <p>{t.contract.phone}: {customer.phone}</p>
-                  <p>{t.contract.address1}: {customer.address_line_1 || "-"}</p>
-                  {customer.address_line_2 ? <p>{t.contract.address2}: {customer.address_line_2}</p> : null}
-                  <p>{t.contract.postalCode}: {customer.postal_code || "-"}</p>
-                  <p>{t.contract.region}: {customer.region || "-"}</p>
+                  <p>{contractText.name}: {customer.first_name} {customer.last_name}</p>
+                  <p>{contractText.email}: {customer.email}</p>
+                  <p>{contractText.phone}: {customer.phone}</p>
+                  <p>{contractText.address1}: {customer.address_line_1 || "-"}</p>
+                  {customer.address_line_2 ? <p>{contractText.address2}: {customer.address_line_2}</p> : null}
+                  <p>{contractText.postalCode}: {customer.postal_code || "-"}</p>
+                  <p>{contractText.region}: {customer.region || "-"}</p>
                   {selectedThirdParty && (
-                    <p>{t.contract.onBehalfOf}: {selectedThirdPartyName}</p>
+                    <p>{contractText.onBehalfOf}: {selectedThirdPartyName}</p>
                   )}
-                  <p>{t.contract.pickup}: {selectedPickup?.name || "-"}</p>
-                  <p>{t.contract.delivery}: {selectedDelivery?.name || "-"}</p>
-                  <p>{t.contract.start}: {startDate || "-"} {t.contract.timePrefix} {startTime}</p>
-                  <p>{t.contract.end}: {endDate || "-"} {t.contract.timePrefix} {endTime}</p>
-                  <p>{t.contract.period}: {pricePreview?.days || "-"} {t.labels.daysLabel}</p>
+                  <p>{contractText.pickup}: {selectedPickup?.name || "-"}</p>
+                  <p>{contractText.delivery}: {selectedDelivery?.name || "-"}</p>
+                  <p>{contractText.start}: {startDate || "-"} {contractText.timePrefix} {startTime}</p>
+                  <p>{contractText.end}: {endDate || "-"} {contractText.timePrefix} {endTime}</p>
+                  <p>{contractText.period}: {pricePreview?.days || "-"} {t.labels.daysLabel}</p>
                   {childSeatSelected && (
                     <p>{t.labels.childSeatLabel}: {t.labels.requestChildSeat} (+{childSeatFee} NOK)</p>
                   )}
                   <p>
-                    {t.contract.deductibleReductionChoice}: {deductibleReductionSelected ? t.contract.yes : t.contract.no}
+                    {contractText.deductibleReductionChoice}: {deductibleReductionSelected ? contractText.yes : contractText.no}
                   </p>
                   {deductibleReductionSelected && pricePreview?.deductibleReductionFee > 0 && (
                     <p>{t.labels.deductibleReductionFeeLabel}: {pricePreview.deductibleReductionFee} NOK</p>
@@ -833,41 +858,41 @@ export default function HomePage() {
                   {pricePreview?.discountAmount > 0 && (
                     <p>{t.labels.discountLabel}: -{Math.round(pricePreview.discountAmount)} NOK</p>
                   )}
-                  <p className="mt-2 text-lg font-semibold">{t.contract.total}: {pricePreview?.total || "-"} NOK</p>
-                  <p>{t.contract.freeKm}: 200 km</p>
-                  <p>{t.contract.extraKm}</p>
-                  <p>{t.contract.responsibility}</p>
+                  <p className="mt-2 text-lg font-semibold">{contractText.total}: {pricePreview?.total || "-"} NOK</p>
+                  <p>{contractText.freeKm}: 200 km</p>
+                  <p>{contractText.extraKm}</p>
+                  <p>{contractText.responsibility}</p>
                 </div>
                 <div className="rounded-2xl bg-white/70 p-4 text-xs">
-                  <p>{t.contract.obligationsTitle}</p>
-                  {t.contract.obligations.map((line) => (
+                  <p>{contractText.obligationsTitle}</p>
+                  {contractText.obligations.map((line) => (
                     <p key={line}>
                       {line}{line.toLowerCase().includes("drivstoff") || line.toLowerCase().includes("fuel") ? ` ${t.labels.fuelType}: ${selectedCar?.fuel || "-"}.` : ""}
                     </p>
                   ))}
-                  <p className="mt-2">{t.contract.deductibleReductionTitle}</p>
+                  <p className="mt-2">{contractText.deductibleReductionTitle}</p>
                   <p>
-                    {t.contract.deductibleReductionInfo.replace(
+                    {contractText.deductibleReductionInfo.replace(
                       "{fee}",
                       String(deductibleReductionDailyFee)
                     )}
                   </p>
                   {deductibleReductionSelected && (
                     <p>
-                      {t.contract.deductibleReductionAccepted.replace(
+                      {contractText.deductibleReductionAccepted.replace(
                         "{fee}",
                         String(deductibleReductionDailyFee)
                       )}
                     </p>
                   )}
-                  <p>{t.contract.deductibleReductionExceptionsIntro}</p>
-                  {t.contract.deductibleReductionExceptions.map((line) => (
+                  <p>{contractText.deductibleReductionExceptionsIntro}</p>
+                  {contractText.deductibleReductionExceptions.map((line) => (
                     <p key={line}>{line}</p>
                   ))}
-                  <p className="mt-2">{t.contract.cancellationPolicyTitle}</p>
-                  <p>{t.contract.cancellationPolicyText}</p>
-                  <p className="mt-2">{t.contract.termsTitle}</p>
-                  {t.contract.terms.map((line) => (
+                  <p className="mt-2">{contractText.cancellationPolicyTitle}</p>
+                  <p>{contractText.cancellationPolicyText}</p>
+                  <p className="mt-2">{contractText.termsTitle}</p>
+                  {contractText.terms.map((line) => (
                     <p key={line}>{line}</p>
                   ))}
                 </div>
@@ -877,7 +902,7 @@ export default function HomePage() {
                     checked={termsAccepted}
                     onChange={(event) => setTermsAccepted(event.target.checked)}
                   />
-                  {t.contract.approve}
+                  {contractText.approve}
                 </label>
                 <button
                   onClick={submitBooking}

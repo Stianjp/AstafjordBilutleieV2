@@ -8,6 +8,8 @@ import { supabase } from "../../lib/supabaseClient";
 const navItems = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/cars", label: "Biler" },
+  { href: "/admin/customers", label: "Kunder" },
+  { href: "/admin/contract", label: "Kontrakt" },
   { href: "/admin/locations", label: "Lokasjoner" },
   { href: "/admin/third-parties", label: "Tredjeparter" },
   { href: "/admin/add-ons", label: "Tilleggsutstyr" },

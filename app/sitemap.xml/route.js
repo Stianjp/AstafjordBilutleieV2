@@ -5,7 +5,10 @@ const staticRoutes = [
   "/login",
   "/admin",
   "/admin/cars",
+  "/admin/customers",
+  "/admin/contract",
   "/admin/locations",
+  "/admin/third-parties",
   "/admin/add-ons",
   "/admin/discount-codes",
   "/admin/mileage"
