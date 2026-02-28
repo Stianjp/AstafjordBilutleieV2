@@ -95,6 +95,7 @@ export async function POST(request) {
   const payload = await request.json();
   const childSeatRequired = payload.child_seat_required === true;
   const deductibleReductionSelected = payload.deductible_reduction_selected === true;
+  const contractLanguage = payload.language === "en" ? "en" : "no";
 
   const requiredFields = [
     "car_id",
@@ -336,6 +337,7 @@ export async function POST(request) {
       discount_code: discountResult.discountCode,
       discount_amount: actualDiscountAmount,
       calculated_price: calculatedPrice,
+      contract_language: contractLanguage,
       status: "pending",
       terms_accepted: payload.terms_accepted
     })
@@ -352,7 +354,8 @@ export async function POST(request) {
     car: { ...car, third_party: thirdParty },
     pickup: pickupLocation,
     delivery: deliveryLocation,
-    thirdParty
+    thirdParty,
+    language: contractLanguage
   });
 
   if (discountResult.discountCodeId) {

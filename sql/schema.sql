@@ -96,6 +96,7 @@ create table if not exists bookings (
   child_seat_fee numeric not null default 0,
   deductible_reduction_selected boolean not null default false,
   deductible_reduction_fee numeric not null default 0,
+  contract_language text not null default 'no' check (contract_language in ('no', 'en')),
   admin_note_1 text,
   admin_note_2 text,
   calculated_price numeric not null,
@@ -108,6 +109,15 @@ alter table if exists bookings
 
 alter table if exists bookings
   add column if not exists deductible_reduction_fee numeric not null default 0;
+
+alter table if exists bookings
+  add column if not exists contract_language text not null default 'no';
+
+alter table if exists bookings
+  drop constraint if exists bookings_contract_language_check;
+
+alter table if exists bookings
+  add constraint bookings_contract_language_check check (contract_language in ('no', 'en'));
 
 create table if not exists discount_codes (
   id uuid primary key default uuid_generate_v4(),

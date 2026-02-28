@@ -283,6 +283,7 @@ export default function HomePage() {
         start_time: startTime,
         end_date: endDate,
         end_time: endTime,
+        language,
         terms_accepted: termsAccepted,
         discount_code: discountInfo?.valid && discountInfo?.eligible !== false ? discountInfo.code : null,
         child_seat_required: childSeatSelected,
