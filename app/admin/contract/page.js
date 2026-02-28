@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../../lib/supabaseClient";
+import { buildContractContent } from "../../../lib/contractSettings";
 
 const emptyForm = {
   intro: "",
@@ -22,6 +23,10 @@ export default function AdminContractPage() {
   const [form, setForm] = useState(emptyForm);
   const [message, setMessage] = useState("");
   const [updatedAt, setUpdatedAt] = useState(null);
+  const [previewThirdParty, setPreviewThirdParty] = useState(false);
+
+  const contractPreview = useMemo(() => buildContractContent(language, form), [language, form]);
+  const previewDailyDeductibleFee = 200;
 
   const loadSettings = async (lang = "no") => {
     const { data } = await supabase.auth.getSession();
@@ -232,6 +237,70 @@ export default function AdminContractPage() {
         >
           Lagre kontraktinnstillinger
         </button>
+
+        <div className="mt-8 rounded-3xl border border-ink/10 bg-white/80 p-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <h2 className="font-display text-xl">Forhandsvisning</h2>
+            <label className="flex items-center gap-2 text-xs uppercase tracking-wide text-ink/70">
+              <input
+                type="checkbox"
+                checked={previewThirdParty}
+                onChange={(event) => setPreviewThirdParty(event.target.checked)}
+              />
+              Simuler tredjepart
+            </label>
+          </div>
+          <p className="mt-2 text-xs text-ink/60">
+            Dynamiske felt (kunde, dato, pris, bil, lokasjon) fylles automatisk ved booking.
+          </p>
+
+          <div className="mt-4 space-y-2 rounded-2xl bg-white/90 p-4 text-sm">
+            <p>
+              {previewThirdParty
+                ? contractPreview.introThirdParty
+                  .replace("{thirdParty}", "Fagerli")
+                  .replace("{phone}", "+47 41474514")
+                : contractPreview.intro}
+            </p>
+            <p>{contractPreview.name}: Stian Test</p>
+            <p>{contractPreview.email}: stianjp@hotmail.com</p>
+            <p>{contractPreview.phone}: 98055169</p>
+            <p>{contractPreview.address1}: Eksempelveien 1</p>
+            <p>{contractPreview.postalCode}: 9357</p>
+            <p>{contractPreview.region}: Tennevoll</p>
+            {previewThirdParty ? <p>{contractPreview.onBehalfOf}: Fagerli</p> : null}
+            <p>{contractPreview.pickup}: Lavangen</p>
+            <p>{contractPreview.delivery}: Lavangen</p>
+            <p>{contractPreview.start}: 2026-03-10 {contractPreview.timePrefix} 10:00</p>
+            <p>{contractPreview.end}: 2026-03-12 {contractPreview.timePrefix} 18:00</p>
+            <p>{contractPreview.period}: 3 dager</p>
+            <p>{contractPreview.deductibleReductionChoice}: {contractPreview.yes}</p>
+            <p><strong>{contractPreview.total}: 3200 NOK</strong></p>
+            <p>{contractPreview.freeKm}: 200 km</p>
+            <p>{contractPreview.extraKm}</p>
+            <p>{contractPreview.responsibility}</p>
+          </div>
+
+          <div className="mt-4 rounded-2xl bg-white/90 p-4 text-xs">
+            <p>{contractPreview.obligationsTitle}</p>
+            {contractPreview.obligations.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+            <p className="mt-2">{contractPreview.deductibleReductionTitle}</p>
+            <p>{contractPreview.deductibleReductionInfo.replace("{fee}", String(previewDailyDeductibleFee))}</p>
+            <p>{contractPreview.deductibleReductionAccepted.replace("{fee}", String(previewDailyDeductibleFee))}</p>
+            <p>{contractPreview.deductibleReductionExceptionsIntro}</p>
+            {contractPreview.deductibleReductionExceptions.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+            <p className="mt-2">{contractPreview.cancellationPolicyTitle}</p>
+            <p>{contractPreview.cancellationPolicyText}</p>
+            <p className="mt-2">{contractPreview.termsTitle}</p>
+            {contractPreview.terms.map((line) => (
+              <p key={line}>{line}</p>
+            ))}
+          </div>
+        </div>
       </form>
     </section>
   );
