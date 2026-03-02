@@ -10,6 +10,25 @@ const kmValueEquals = (left, right) => {
   return a === b;
 };
 
+const getLogTimestampMs = (log) => {
+  const value = log?.created_at || log?.updated_at;
+  const ms = value ? Date.parse(value) : NaN;
+  return Number.isFinite(ms) ? ms : 0;
+};
+
+const formatDateTimeShort = (value) => {
+  if (!value) return "-";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "-";
+  return date.toLocaleString("nb-NO", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+};
+
 export default function AdminMileagePage() {
   const [cars, setCars] = useState([]);
   const [logs, setLogs] = useState([]);
@@ -21,6 +40,12 @@ export default function AdminMileagePage() {
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState("");
   const [editRows, setEditRows] = useState({});
+  const [historyCarFilter, setHistoryCarFilter] = useState("all");
+  const [historySourceFilter, setHistorySourceFilter] = useState("all");
+  const [historyPeriodFilter, setHistoryPeriodFilter] = useState("all");
+  const [historySort, setHistorySort] = useState("latest_desc");
+  const [historyQuery, setHistoryQuery] = useState("");
+  const [showOnlyCarsWithLogs, setShowOnlyCarsWithLogs] = useState(true);
 
   const loadCars = async () => {
     const { data } = await supabase.auth.getSession();
@@ -130,17 +155,112 @@ export default function AdminMileagePage() {
     }
   };
 
-  const logsByCar = useMemo(() => {
+  const carsById = useMemo(() => {
     const map = new Map();
-    cars.forEach((car) => map.set(car.id, []));
-    logs.forEach((log) => {
-      if (!map.has(log.car_id)) {
-        map.set(log.car_id, []);
-      }
-      map.get(log.car_id).push(log);
-    });
+    cars.forEach((car) => map.set(car.id, car));
     return map;
-  }, [cars, logs]);
+  }, [cars]);
+
+  const filteredLogs = useMemo(() => {
+    const query = historyQuery.trim().toLowerCase();
+    const nowMs = Date.now();
+    const periodDays = historyPeriodFilter === "all" ? null : Number(historyPeriodFilter);
+
+    return logs.filter((log) => {
+      if (historyCarFilter !== "all" && log.car_id !== historyCarFilter) {
+        return false;
+      }
+
+      const source = log.source || "manual";
+      if (historySourceFilter !== "all" && source !== historySourceFilter) {
+        return false;
+      }
+
+      if (periodDays != null) {
+        const timestampMs = getLogTimestampMs(log);
+        if (!timestampMs) return false;
+        const maxAgeMs = periodDays * 24 * 60 * 60 * 1000;
+        if (nowMs - timestampMs > maxAgeMs) return false;
+      }
+
+      if (!query) return true;
+
+      const car = carsById.get(log.car_id);
+      const haystack = [
+        String(car?.model || ""),
+        String(car?.reg_number || ""),
+        String(log.booking_id || ""),
+        String(log.reason || ""),
+        String(log.override_reason || ""),
+        String(source)
+      ]
+        .join(" ")
+        .toLowerCase();
+
+      return haystack.includes(query);
+    });
+  }, [
+    logs,
+    historyCarFilter,
+    historySourceFilter,
+    historyPeriodFilter,
+    historyQuery,
+    carsById
+  ]);
+
+  const groupedHistory = useMemo(() => {
+    const map = new Map();
+
+    cars.forEach((car) => {
+      map.set(car.id, { carId: car.id, car, logs: [], latestMs: 0 });
+    });
+
+    filteredLogs.forEach((log) => {
+      const existing = map.get(log.car_id) || {
+        carId: log.car_id,
+        car: carsById.get(log.car_id) || null,
+        logs: [],
+        latestMs: 0
+      };
+      existing.logs.push(log);
+      map.set(log.car_id, existing);
+    });
+
+    const rows = Array.from(map.values()).map((entry) => {
+      const sortedLogs = [...entry.logs].sort((a, b) => getLogTimestampMs(b) - getLogTimestampMs(a));
+      return {
+        ...entry,
+        logs: sortedLogs,
+        latestMs: sortedLogs.length ? getLogTimestampMs(sortedLogs[0]) : 0
+      };
+    });
+
+    let next = rows;
+    if (showOnlyCarsWithLogs) {
+      next = next.filter((entry) => entry.logs.length > 0);
+    }
+
+    if (historySort === "latest_desc") {
+      next = [...next].sort((a, b) => b.latestMs - a.latestMs);
+    } else if (historySort === "latest_asc") {
+      next = [...next].sort((a, b) => a.latestMs - b.latestMs);
+    } else if (historySort === "model_asc") {
+      next = [...next].sort((a, b) =>
+        String(a.car?.model || "").localeCompare(String(b.car?.model || ""), "nb-NO")
+      );
+    } else if (historySort === "model_desc") {
+      next = [...next].sort((a, b) =>
+        String(b.car?.model || "").localeCompare(String(a.car?.model || ""), "nb-NO")
+      );
+    }
+
+    return next;
+  }, [cars, filteredLogs, showOnlyCarsWithLogs, historySort, carsById]);
+
+  const totalDisplayedLogs = useMemo(
+    () => groupedHistory.reduce((sum, entry) => sum + entry.logs.length, 0),
+    [groupedHistory]
+  );
 
   const startEdit = (log) => {
     setEditRows((prev) => ({
@@ -280,7 +400,7 @@ export default function AdminMileagePage() {
             <p className="mt-2 rounded-xl border border-ink/10 bg-white/70 p-3 text-sm">{totalKm} km</p>
           </div>
           <div className="mt-4">
-            <label className="text-sm">Arsak</label>
+            <label className="text-sm">Årsak</label>
             <textarea
               value={reason}
               onChange={(event) => setReason(event.target.value)}
@@ -299,11 +419,102 @@ export default function AdminMileagePage() {
 
         <div className="mt-10">
           <h2 className="font-display text-2xl">Historikk per bil</h2>
-          {[...logsByCar.entries()].map(([carKey, carLogs]) => {
-            const car = cars.find((item) => item.id === carKey);
+          <p className="mt-1 text-sm text-ink/70">
+            Viser {groupedHistory.length} biler og {totalDisplayedLogs} registreringer.
+          </p>
+
+          <div className="mt-4 grid gap-3 rounded-2xl border border-ink/10 bg-white/60 p-4 md:grid-cols-2 xl:grid-cols-6">
+            <div>
+              <label className="text-xs uppercase tracking-wide text-ink/60">Bil</label>
+              <select
+                value={historyCarFilter}
+                onChange={(event) => setHistoryCarFilter(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-ink/20 bg-white/80 p-2 text-sm"
+              >
+                <option value="all">Alle biler</option>
+                {cars.map((car) => (
+                  <option key={car.id} value={car.id}>
+                    {car.model} ({car.reg_number})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs uppercase tracking-wide text-ink/60">Kilde</label>
+              <select
+                value={historySourceFilter}
+                onChange={(event) => setHistorySourceFilter(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-ink/20 bg-white/80 p-2 text-sm"
+              >
+                <option value="all">Alle kilder</option>
+                <option value="manual">manual</option>
+                <option value="booking">booking</option>
+                <option value="car_adjustment">car_adjustment</option>
+                <option value="legacy">legacy</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs uppercase tracking-wide text-ink/60">Periode</label>
+              <select
+                value={historyPeriodFilter}
+                onChange={(event) => setHistoryPeriodFilter(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-ink/20 bg-white/80 p-2 text-sm"
+              >
+                <option value="all">Hele historikken</option>
+                <option value="7">Siste 7 dager</option>
+                <option value="30">Siste 30 dager</option>
+                <option value="90">Siste 90 dager</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="text-xs uppercase tracking-wide text-ink/60">Sorter biler</label>
+              <select
+                value={historySort}
+                onChange={(event) => setHistorySort(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-ink/20 bg-white/80 p-2 text-sm"
+              >
+                <option value="latest_desc">Sist registrert (nyeste)</option>
+                <option value="latest_asc">Sist registrert (eldste)</option>
+                <option value="model_asc">Modell (A-Å)</option>
+                <option value="model_desc">Modell (Å-A)</option>
+              </select>
+            </div>
+
+            <div className="xl:col-span-2">
+              <label className="text-xs uppercase tracking-wide text-ink/60">Søk</label>
+              <input
+                value={historyQuery}
+                onChange={(event) => setHistoryQuery(event.target.value)}
+                className="mt-1 w-full rounded-lg border border-ink/20 bg-white/80 p-2 text-sm"
+                placeholder="Søk i modell, regnr, booking-ID, årsak"
+              />
+            </div>
+
+            <label className="md:col-span-2 xl:col-span-6 flex items-center gap-2 text-sm text-ink/70">
+              <input
+                type="checkbox"
+                checked={showOnlyCarsWithLogs}
+                onChange={(event) => setShowOnlyCarsWithLogs(event.target.checked)}
+              />
+              Vis kun biler med registreringer
+            </label>
+          </div>
+
+          {groupedHistory.map((entry) => {
+            const car = entry.car;
+            const carLogs = entry.logs;
+            const latest = carLogs[0];
             return (
-              <div key={carKey} className="mt-6">
-                <p className="font-medium">{car?.model || "Ukjent bil"} ({car?.reg_number || "-"})</p>
+              <div key={entry.carId || `car-${car?.reg_number || "unknown"}`} className="mt-6">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="font-medium">{car?.model || "Ukjent bil"} ({car?.reg_number || "-"})</p>
+                  <p className="text-xs text-ink/60">
+                    Sist registrert: {latest ? formatDateTimeShort(latest.created_at || latest.updated_at) : "-"} · {carLogs.length} oppføringer
+                  </p>
+                </div>
                 <div className="mt-3 overflow-x-auto">
                   <table className="w-full border-collapse text-sm">
                     <thead>
@@ -312,9 +523,10 @@ export default function AdminMileagePage() {
                         <th className="py-2">Slutt km</th>
                         <th className="py-2">Total</th>
                         <th className="py-2">Booking ID</th>
-                        <th className="py-2">Arsak</th>
+                        <th className="py-2">Årsak</th>
                         <th className="py-2">Override</th>
                         <th className="py-2">Kilde</th>
+                        <th className="py-2">Registrert</th>
                         <th className="py-2">Handling</th>
                       </tr>
                     </thead>
@@ -429,6 +641,9 @@ export default function AdminMileagePage() {
                                 log.source || "manual"
                               )}
                             </td>
+                            <td className="py-2 whitespace-nowrap text-ink/70">
+                              {formatDateTimeShort(log.created_at || log.updated_at)}
+                            </td>
                             <td className="py-2">
                               {edit ? (
                                 <div className="flex gap-2 text-xs uppercase tracking-wide">
@@ -459,7 +674,7 @@ export default function AdminMileagePage() {
                       })}
                       {carLogs.length === 0 && (
                         <tr>
-                          <td className="py-3 text-sm text-ink/60" colSpan={8}>
+                          <td className="py-3 text-sm text-ink/60" colSpan={9}>
                             Ingen kjørebokoppføringer enda.
                           </td>
                         </tr>
@@ -470,6 +685,12 @@ export default function AdminMileagePage() {
               </div>
             );
           })}
+
+          {groupedHistory.length === 0 && (
+            <p className="mt-6 text-sm text-ink/60">
+              Ingen treff med valgt filtrering.
+            </p>
+          )}
         </div>
     </section>
   );

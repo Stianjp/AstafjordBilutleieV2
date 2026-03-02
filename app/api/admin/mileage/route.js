@@ -20,6 +20,7 @@ export async function GET(request) {
   const { data, error } = await supabaseService
     .from("mileage_logs")
     .select("*, cars(model, reg_number)")
+    .order("created_at", { ascending: false })
     .order("id", { ascending: false });
 
   if (error) {
