@@ -58,7 +58,7 @@ export default function AdminMileagePage() {
     });
     const dataResponse = await response.json();
     if (!response.ok) {
-      setMessage(dataResponse.error || "Kunne ikke hente kjorebok.");
+      setMessage(dataResponse.error || "Kunne ikke hente kjørebok.");
       return;
     }
 
@@ -88,7 +88,7 @@ export default function AdminMileagePage() {
     const latestCarKm = Number(selectedCar?.current_km || 0);
     const startChangedFromLatest = !kmValueEquals(kmStart, latestCarKm);
     if (startChangedFromLatest && !String(kmOverrideReason || "").trim()) {
-      setMessage("Begrunnelse kreves nar start km avviker fra siste km-stand pa bilen.");
+      setMessage("Begrunnelse kreves når start km avviker fra siste km-stand på bilen.");
       return;
     }
 
@@ -173,7 +173,7 @@ export default function AdminMileagePage() {
     const startWasChanged = !kmValueEquals(draft.km_start, original?.km_start ?? null);
     const startDiffersFromLatest = !kmValueEquals(draft.km_start, latestCarKm);
     if (startWasChanged && startDiffersFromLatest && !String(draft.override_reason || "").trim()) {
-      setMessage("Begrunnelse kreves nar start km avviker fra siste km-stand pa bilen.");
+      setMessage("Begrunnelse kreves når start km avviker fra siste km-stand på bilen.");
       return;
     }
 
@@ -218,8 +218,8 @@ export default function AdminMileagePage() {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 pb-16 pt-6 sm:px-6">
-        <h1 className="font-display text-3xl">Admin: kjorebok</h1>
-        <p className="mt-2 text-sm text-ink/70">Registrer start- og sluttkm og arsaken.</p>
+        <h1 className="font-display text-3xl">Admin: kjørebok</h1>
+        <p className="mt-2 text-sm text-ink/70">Registrer start- og sluttkm og årsaken.</p>
         <div className="mt-6 gradient-card rounded-3xl p-6 shadow-card">
           <label className="text-sm">Bil</label>
           <select
@@ -235,7 +235,7 @@ export default function AdminMileagePage() {
             ))}
           </select>
           <p className="mt-2 text-xs text-ink/60">
-            Siste km-stand pa valgt bil: {Math.round(Number(cars.find((item) => item.id === carId)?.current_km || 0))} km
+            Siste km-stand på valgt bil: {Math.round(Number(cars.find((item) => item.id === carId)?.current_km || 0))} km
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div>
@@ -460,7 +460,7 @@ export default function AdminMileagePage() {
                       {carLogs.length === 0 && (
                         <tr>
                           <td className="py-3 text-sm text-ink/60" colSpan={8}>
-                            Ingen kjorebokoppforinger enda.
+                            Ingen kjørebokoppføringer enda.
                           </td>
                         </tr>
                       )}

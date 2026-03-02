@@ -11,9 +11,9 @@ const statusHelp = {
   rejected: "Her er oversikt over avviste bookinger. Disse kan slettes.",
   cancelled: "Her er oversikt over kansellerte bookinger. Disse kan slettes.",
   active: "Her ligger aktive leier. Nar leien er ferdig flyttes den automatisk til past.",
-  future: "Her er oversikt over fremtidige leier. Disse flyttes automatisk til active nar perioden starter.",
+  future: "Her er oversikt over fremtidige leier. Disse flyttes automatisk til active når perioden starter.",
   past: "Her er avsluttede leier. For a flytte til completed, oppdater sluttkm.",
-  completed: "Her er fullforte leieforhold med registrert sluttkm."
+  completed: "Her er fullførte leieforhold med registrert sluttkm."
 };
 
 const parseDateOnly = (value) => {
@@ -268,7 +268,7 @@ export default function AdminDashboard() {
     const startWasChanged = !kmValueEquals(draftStartKm, currentBookingStartKm);
     const startChangedFromLatest = !kmValueEquals(draftStartKm, latestCarKm);
     if (startWasChanged && startChangedFromLatest && !String(draft.km_override_reason || "").trim()) {
-      setMessage("Begrunnelse kreves nar start km avviker fra siste km-stand pa bilen.");
+      setMessage("Begrunnelse kreves når start km avviker fra siste km-stand på bilen.");
       return;
     }
 

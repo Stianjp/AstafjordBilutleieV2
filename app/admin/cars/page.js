@@ -114,7 +114,7 @@ export default function AdminCarsPage() {
 
     const insuranceAnnualLimit = toNumberOrNull(form.insurance_annual_km_limit);
     if (insuranceAnnualLimit != null && insuranceAnnualLimit <= 0) {
-      setMessage("Aarlig km-grense ma vaere over 0.");
+      setMessage("Årlig km-grense må være over 0.");
       return;
     }
 
@@ -308,7 +308,7 @@ export default function AdminCarsPage() {
               />
             </div>
             <div className="mt-4">
-              <label className="text-sm">Aarlig km-grense (forsikring)</label>
+              <label className="text-sm">Årlig km-grense (forsikring)</label>
               <input
                 type="number"
                 value={form.insurance_annual_km_limit}
@@ -317,7 +317,7 @@ export default function AdminCarsPage() {
                 placeholder="Eks: 30000"
               />
               <p className="mt-2 text-xs text-ink/60">
-                Tomt felt betyr at bilen ikke spores mot aarlig forsikringsgrense.
+                Tomt felt betyr at bilen ikke spores mot årlig forsikringsgrense.
               </p>
             </div>
             {kmChanged && (
@@ -334,9 +334,9 @@ export default function AdminCarsPage() {
             )}
             {editingId && form.insurance_annual_km_limit !== "" && (
               <div className="mt-4 rounded-xl border border-ink/10 bg-white/70 p-3 text-xs text-ink/70">
-                <p>Tracking-aar: {form.insurance_tracking_year || "-"}</p>
-                <p>Start km i aar: {form.insurance_year_start_km === "" ? "-" : form.insurance_year_start_km}</p>
-                <p>Varsel sendt for aar: {form.insurance_alert_sent_year || "-"}</p>
+                <p>Tracking-år: {form.insurance_tracking_year || "-"}</p>
+                <p>Start km i år: {form.insurance_year_start_km === "" ? "-" : form.insurance_year_start_km}</p>
+                <p>Varsel sendt for år: {form.insurance_alert_sent_year || "-"}</p>
               </div>
             )}
             <label className="mt-4 flex items-center gap-2 text-sm">
@@ -423,9 +423,9 @@ export default function AdminCarsPage() {
                   <p className="text-sm text-ink/60">Navigasjon: {car.has_navigation ? "Ja" : "Nei"}</p>
                   {insurance && (
                     <div className="mt-2 rounded-xl border border-ink/10 bg-white/70 p-2 text-xs text-ink/70">
-                      <p>Forsikring: {toKmInteger(insurance.annualLimit)} km/aar</p>
-                      <p>Brukt i aar: {toKmInteger(insurance.usedKm)} km</p>
-                      <p>Igjen i aar: {toKmInteger(insurance.remainingKm)} km</p>
+                      <p>Forsikring: {toKmInteger(insurance.annualLimit)} km/år</p>
+                      <p>Brukt i år: {toKmInteger(insurance.usedKm)} km</p>
+                      <p>Igjen i år: {toKmInteger(insurance.remainingKm)} km</p>
                     </div>
                   )}
                   {car.owned_by_third_party && (

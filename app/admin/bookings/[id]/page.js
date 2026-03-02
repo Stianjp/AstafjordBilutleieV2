@@ -131,7 +131,7 @@ export default function AdminBookingDetail() {
     const startWasChanged = !kmValueEquals(nextStartKm, bookingStartKm);
     const startDiffersFromLatest = !kmValueEquals(nextStartKm, latestCarKm);
     if (startWasChanged && startDiffersFromLatest && !String(form.km_override_reason || "").trim()) {
-      setMessage("Begrunnelse kreves nar start km avviker fra siste km-stand pa bilen.");
+      setMessage("Begrunnelse kreves når start km avviker fra siste km-stand på bilen.");
       return;
     }
 
@@ -452,7 +452,7 @@ export default function AdminBookingDetail() {
                   className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
                 />
                 <p className="mt-1 text-xs text-ink/60">
-                  Siste km-stand pa valgt bil: {Math.round(Number(cars.find((car) => car.id === form.car_id)?.current_km || 0))} km
+                  Siste km-stand på valgt bil: {Math.round(Number(cars.find((car) => car.id === form.car_id)?.current_km || 0))} km
                 </p>
               </div>
               <div>

@@ -1,5 +1,5 @@
 -- Migration: Felles km-system + forsikringsvarsling
--- Kjor denne direkte i Supabase SQL Editor.
+-- Kjør denne direkte i Supabase SQL Editor.
 
 alter table if exists public.cars
   add column if not exists insurance_annual_km_limit integer;
