@@ -44,12 +44,24 @@ const formatDateShort = (value) => {
   return `${day}.${month} ${year}`;
 };
 
+const kmValueEquals = (left, right) => {
+  const a = left === "" || left == null ? null : Number(left);
+  const b = right === "" || right == null ? null : Number(right);
+  if (a == null && b == null) return true;
+  return a === b;
+};
+
 export default function AdminDashboard() {
   const [status, setStatus] = useState("pending");
   const [allBookings, setAllBookings] = useState([]);
   const [cars, setCars] = useState([]);
   const [message, setMessage] = useState("");
   const [kmDrafts, setKmDrafts] = useState({});
+  const carsById = useMemo(() => {
+    const map = new Map();
+    (cars || []).forEach((car) => map.set(car.id, car));
+    return map;
+  }, [cars]);
 
   const displayedBookings = useMemo(() => {
     let next = allBookings || [];
@@ -182,16 +194,28 @@ export default function AdminDashboard() {
 
     setMessage("");
     const nextBookings = bookingsPayload.bookings || [];
+    const nextCars = carsPayload.cars || [];
+    const carMap = new Map(nextCars.map((car) => [car.id, car]));
     setAllBookings(nextBookings);
-    setCars(carsPayload.cars || []);
+    setCars(nextCars);
 
     setKmDrafts((prev) => {
       const next = { ...prev };
       nextBookings.forEach((booking) => {
+        const latestKm = carMap.get(booking.car_id)?.current_km ?? "";
+        const defaultStartKm = booking.start_km ?? latestKm;
         if (!next[booking.id]) {
           next[booking.id] = {
-            start_km: booking.start_km ?? "",
-            end_km: booking.end_km ?? ""
+            start_km: defaultStartKm,
+            end_km: booking.end_km ?? "",
+            km_override_reason: ""
+          };
+        } else {
+          next[booking.id] = {
+            ...next[booking.id],
+            start_km: next[booking.id].start_km === "" ? defaultStartKm : next[booking.id].start_km,
+            end_km: next[booking.id].end_km === "" ? booking.end_km ?? "" : next[booking.id].end_km,
+            km_override_reason: next[booking.id].km_override_reason ?? ""
           };
         }
       });
@@ -236,6 +260,18 @@ export default function AdminDashboard() {
   const saveKm = async (booking) => {
     const draft = kmDrafts[booking.id];
     if (!draft) return;
+
+    const latestCarKm = Number(carsById.get(booking.car_id)?.current_km || 0);
+    const draftStartKm = draft.start_km === "" ? null : Number(draft.start_km);
+    const draftEndKm = draft.end_km === "" ? null : Number(draft.end_km);
+    const currentBookingStartKm = booking.start_km == null ? null : Number(booking.start_km);
+    const startWasChanged = !kmValueEquals(draftStartKm, currentBookingStartKm);
+    const startChangedFromLatest = !kmValueEquals(draftStartKm, latestCarKm);
+    if (startWasChanged && startChangedFromLatest && !String(draft.km_override_reason || "").trim()) {
+      setMessage("Begrunnelse kreves nar start km avviker fra siste km-stand pa bilen.");
+      return;
+    }
+
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) return;
@@ -255,8 +291,9 @@ export default function AdminDashboard() {
         end_time: booking.end_time || null,
         days: booking.days,
         calculated_price: booking.calculated_price,
-        start_km: draft.start_km === "" ? null : Number(draft.start_km),
-        end_km: draft.end_km === "" ? null : Number(draft.end_km)
+        start_km: draftStartKm,
+        end_km: draftEndKm,
+        km_override_reason: draft.km_override_reason || null
       })
     });
 
@@ -390,6 +427,9 @@ export default function AdminDashboard() {
                 {["active", "future", "past"].includes(status) && (
                   <div className="mt-3 rounded-2xl border border-ink/10 bg-white/60 p-3 text-[11px] sm:text-xs">
                     <p className="uppercase tracking-wide text-ink/50">Kilometer</p>
+                    <p className="mt-1 text-ink/60">
+                      Siste km-stand: {Math.round(Number(carsById.get(booking.car_id)?.current_km || 0))} km
+                    </p>
                     <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                       <input
                         type="number"
@@ -414,6 +454,18 @@ export default function AdminDashboard() {
                           }))
                         }
                         className="w-full rounded-lg border border-ink/20 bg-white/80 p-2 sm:w-24"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Begrunnelse ved avvik i start km"
+                        value={kmDrafts[booking.id]?.km_override_reason ?? ""}
+                        onChange={(event) =>
+                          setKmDrafts((prev) => ({
+                            ...prev,
+                            [booking.id]: { ...prev[booking.id], km_override_reason: event.target.value }
+                          }))
+                        }
+                        className="w-full rounded-lg border border-ink/20 bg-white/80 p-2 sm:min-w-[220px] sm:flex-1"
                       />
                       <button
                         className="rounded-full border border-ink/20 px-4 py-2 text-[11px] uppercase tracking-wide sm:text-[10px]"

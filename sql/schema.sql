@@ -32,6 +32,10 @@ create table if not exists cars (
   owned_by_third_party boolean not null default false,
   third_party_id uuid references third_parties(id),
   current_km numeric not null default 0,
+  insurance_annual_km_limit integer,
+  insurance_tracking_year integer,
+  insurance_year_start_km numeric,
+  insurance_alert_sent_year integer,
   active boolean not null default true
 );
 
@@ -43,6 +47,25 @@ alter table if exists cars
 
 alter table if exists cars
   add column if not exists third_party_id uuid references third_parties(id);
+
+alter table if exists cars
+  add column if not exists insurance_annual_km_limit integer;
+
+alter table if exists cars
+  add column if not exists insurance_tracking_year integer;
+
+alter table if exists cars
+  add column if not exists insurance_year_start_km numeric;
+
+alter table if exists cars
+  add column if not exists insurance_alert_sent_year integer;
+
+alter table if exists cars
+  drop constraint if exists cars_insurance_annual_km_limit_check;
+
+alter table if exists cars
+  add constraint cars_insurance_annual_km_limit_check
+  check (insurance_annual_km_limit is null or insurance_annual_km_limit > 0);
 
 create table if not exists customers (
   id uuid primary key default uuid_generate_v4(),
@@ -226,8 +249,31 @@ create table if not exists mileage_logs (
   driven_km numeric,
   extra_km numeric,
   extra_cost numeric,
-  reason text
+  reason text,
+  source text not null default 'manual',
+  override_reason text,
+  created_at timestamp with time zone not null default now(),
+  updated_at timestamp with time zone not null default now()
 );
+
+alter table if exists mileage_logs
+  add column if not exists source text not null default 'manual';
+
+alter table if exists mileage_logs
+  add column if not exists override_reason text;
+
+alter table if exists mileage_logs
+  add column if not exists created_at timestamp with time zone not null default now();
+
+alter table if exists mileage_logs
+  add column if not exists updated_at timestamp with time zone not null default now();
+
+alter table if exists mileage_logs
+  drop constraint if exists mileage_logs_source_check;
+
+alter table if exists mileage_logs
+  add constraint mileage_logs_source_check
+  check (source in ('manual', 'booking', 'car_adjustment', 'legacy'));
 
 create table if not exists admins (
   id uuid primary key default uuid_generate_v4(),
@@ -238,3 +284,4 @@ create table if not exists admins (
 
 create index if not exists bookings_status_idx on bookings (status);
 create index if not exists bookings_dates_idx on bookings (start_date, end_date);
+create unique index if not exists mileage_logs_booking_uidx on mileage_logs (booking_id) where booking_id is not null;

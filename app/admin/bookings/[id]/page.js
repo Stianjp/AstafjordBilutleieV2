@@ -4,6 +4,13 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { supabase } from "../../../../lib/supabaseClient";
 
+const kmValueEquals = (left, right) => {
+  const a = left === "" || left == null ? null : Number(left);
+  const b = right === "" || right == null ? null : Number(right);
+  if (a == null && b == null) return true;
+  return a === b;
+};
+
 export default function AdminBookingDetail() {
   const params = useParams();
   const router = useRouter();
@@ -36,6 +43,7 @@ export default function AdminBookingDetail() {
     admin_note_2: "",
     start_km: "",
     end_km: "",
+    km_override_reason: "",
     days: "",
     calculated_price: ""
   });
@@ -97,6 +105,7 @@ export default function AdminBookingDetail() {
       admin_note_2: bookingData.booking.admin_note_2 || "",
       start_km: bookingData.booking.start_km ?? "",
       end_km: bookingData.booking.end_km ?? "",
+      km_override_reason: "",
       days: bookingData.booking.days,
       calculated_price: bookingData.booking.calculated_price
     });
@@ -108,7 +117,24 @@ export default function AdminBookingDetail() {
     }
   }, [bookingId]);
 
+  useEffect(() => {
+    if (!form.car_id || form.start_km !== "") return;
+    const selectedCar = cars.find((car) => car.id === form.car_id);
+    if (!selectedCar || selectedCar.current_km == null) return;
+    setForm((prev) => ({ ...prev, start_km: String(selectedCar.current_km) }));
+  }, [cars, form.car_id, form.start_km]);
+
   const handleSave = async () => {
+    const nextStartKm = form.start_km === "" ? null : Number(form.start_km);
+    const bookingStartKm = booking?.start_km == null ? null : Number(booking.start_km);
+    const latestCarKm = Number(cars.find((car) => car.id === form.car_id)?.current_km || 0);
+    const startWasChanged = !kmValueEquals(nextStartKm, bookingStartKm);
+    const startDiffersFromLatest = !kmValueEquals(nextStartKm, latestCarKm);
+    if (startWasChanged && startDiffersFromLatest && !String(form.km_override_reason || "").trim()) {
+      setMessage("Begrunnelse kreves nar start km avviker fra siste km-stand pa bilen.");
+      return;
+    }
+
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) return;
@@ -142,8 +168,9 @@ export default function AdminBookingDetail() {
         admin_note_2: form.admin_note_2,
         days: form.days ? Number(form.days) : undefined,
         calculated_price: form.calculated_price ? Number(form.calculated_price) : undefined,
-        start_km: form.start_km === "" ? null : Number(form.start_km),
-        end_km: form.end_km === "" ? null : Number(form.end_km)
+        start_km: nextStartKm,
+        end_km: form.end_km === "" ? null : Number(form.end_km),
+        km_override_reason: form.km_override_reason || null
       })
     });
 
@@ -424,6 +451,9 @@ export default function AdminBookingDetail() {
                   onChange={(event) => setForm({ ...form, start_km: event.target.value })}
                   className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
                 />
+                <p className="mt-1 text-xs text-ink/60">
+                  Siste km-stand pa valgt bil: {Math.round(Number(cars.find((car) => car.id === form.car_id)?.current_km || 0))} km
+                </p>
               </div>
               <div>
                 <label className="text-sm">Slutt km</label>
@@ -434,6 +464,15 @@ export default function AdminBookingDetail() {
                   className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
                 />
               </div>
+            </div>
+            <div className="mt-3">
+              <label className="text-sm">Begrunnelse ved avvik i start km</label>
+              <textarea
+                value={form.km_override_reason}
+                onChange={(event) => setForm({ ...form, km_override_reason: event.target.value })}
+                className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                rows={2}
+              />
             </div>
             <button
               onClick={handleSave}

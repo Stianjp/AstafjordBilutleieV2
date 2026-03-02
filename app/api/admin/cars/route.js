@@ -1,5 +1,6 @@
 import { supabaseService } from "../../../../lib/serverSupabase";
 import { getUserFromRequest, isAdminEmail } from "../../../../lib/auth";
+import { normalizeInsuranceFields } from "../../../../lib/kmService";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -39,6 +40,20 @@ export async function POST(request) {
   if (payload.owned_by_third_party && !payload.third_party_id) {
     return Response.json({ error: "Velg tredjepart for bilen." }, { status: 400 });
   }
+
+  const currentKm = Number(payload.current_km || 0);
+  if (!Number.isFinite(currentKm) || currentKm < 0) {
+    return Response.json({ error: "Ugyldig kilometerstand" }, { status: 400 });
+  }
+
+  const insuranceFields = normalizeInsuranceFields({
+    annualLimit: payload.insurance_annual_km_limit,
+    currentKm,
+    trackingYear: payload.insurance_tracking_year,
+    yearStartKm: payload.insurance_year_start_km,
+    alertSentYear: payload.insurance_alert_sent_year
+  });
+
   const { data, error } = await supabaseService
     .from("cars")
     .insert({
@@ -54,7 +69,11 @@ export async function POST(request) {
       has_navigation: payload.has_navigation ?? true,
       owned_by_third_party: payload.owned_by_third_party ?? false,
       third_party_id: payload.owned_by_third_party ? payload.third_party_id || null : null,
-      current_km: payload.current_km || 0,
+      current_km: currentKm,
+      insurance_annual_km_limit: insuranceFields.insurance_annual_km_limit,
+      insurance_tracking_year: insuranceFields.insurance_tracking_year,
+      insurance_year_start_km: insuranceFields.insurance_year_start_km,
+      insurance_alert_sent_year: insuranceFields.insurance_alert_sent_year,
       active: payload.active ?? true
     })
     .select("*")

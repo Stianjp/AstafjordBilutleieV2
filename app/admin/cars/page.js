@@ -3,6 +3,40 @@
 import { useEffect, useState } from "react";
 import { supabase } from "../../../lib/supabaseClient";
 
+const getCurrentYearInOslo = () =>
+  Number(new Intl.DateTimeFormat("en-CA", { timeZone: "Europe/Oslo", year: "numeric" }).format(new Date()));
+
+const toNumberOrNull = (value) => {
+  if (value === "" || value == null) return null;
+  const next = Number(value);
+  return Number.isFinite(next) ? next : null;
+};
+
+const toKmInteger = (value) => {
+  const next = Number(value || 0);
+  if (!Number.isFinite(next)) return 0;
+  return Math.max(0, Math.round(next));
+};
+
+const calculateInsuranceStatus = (car) => {
+  const annualLimit = Number(car.insurance_annual_km_limit || 0);
+  if (!annualLimit) return null;
+
+  const currentKm = Number(car.current_km || 0);
+  const trackingYear = Number(car.insurance_tracking_year || 0);
+  const yearNow = getCurrentYearInOslo();
+  const yearStartKm = Number(car.insurance_year_start_km || 0);
+  const startKmForYear = trackingYear === yearNow ? yearStartKm : currentKm;
+  const usedKm = Math.max(0, currentKm - startKmForYear);
+  const remainingKm = annualLimit - usedKm;
+
+  return {
+    annualLimit,
+    usedKm,
+    remainingKm
+  };
+};
+
 const emptyForm = {
   reg_number: "",
   model: "",
@@ -17,6 +51,11 @@ const emptyForm = {
   owned_by_third_party: false,
   third_party_id: "",
   current_km: "",
+  insurance_annual_km_limit: "",
+  insurance_tracking_year: "",
+  insurance_year_start_km: "",
+  insurance_alert_sent_year: "",
+  km_change_reason: "",
   active: true
 };
 
@@ -27,6 +66,10 @@ export default function AdminCarsPage() {
   const [form, setForm] = useState(emptyForm);
   const [editingId, setEditingId] = useState(null);
   const [message, setMessage] = useState("");
+  const carBeingEdited = cars.find((item) => item.id === editingId) || null;
+  const kmChanged = editingId
+    && carBeingEdited
+    && Number(form.current_km || 0) !== Number(carBeingEdited.current_km || 0);
 
   const loadData = async () => {
     const { data } = await supabase.auth.getSession();
@@ -69,6 +112,12 @@ export default function AdminCarsPage() {
     const token = data.session?.access_token;
     if (!token) return;
 
+    const insuranceAnnualLimit = toNumberOrNull(form.insurance_annual_km_limit);
+    if (insuranceAnnualLimit != null && insuranceAnnualLimit <= 0) {
+      setMessage("Aarlig km-grense ma vaere over 0.");
+      return;
+    }
+
     const response = await fetch(editingId ? `/api/admin/cars/${editingId}` : "/api/admin/cars", {
       method: editingId ? "PUT" : "POST",
       headers: {
@@ -81,6 +130,11 @@ export default function AdminCarsPage() {
         daily_price: Number(form.daily_price),
         monthly_price_cap: Number(form.monthly_price_cap),
         current_km: Number(form.current_km),
+        insurance_annual_km_limit: insuranceAnnualLimit,
+        insurance_tracking_year: toNumberOrNull(form.insurance_tracking_year),
+        insurance_year_start_km: toNumberOrNull(form.insurance_year_start_km),
+        insurance_alert_sent_year: toNumberOrNull(form.insurance_alert_sent_year),
+        km_change_reason: kmChanged ? form.km_change_reason : null,
         has_navigation: form.has_navigation,
         owned_by_third_party: form.owned_by_third_party,
         third_party_id: form.owned_by_third_party ? form.third_party_id || null : null
@@ -114,6 +168,11 @@ export default function AdminCarsPage() {
       owned_by_third_party: car.owned_by_third_party ?? false,
       third_party_id: car.third_party_id || "",
       current_km: car.current_km,
+      insurance_annual_km_limit: car.insurance_annual_km_limit ?? "",
+      insurance_tracking_year: car.insurance_tracking_year ?? "",
+      insurance_year_start_km: car.insurance_year_start_km ?? "",
+      insurance_alert_sent_year: car.insurance_alert_sent_year ?? "",
+      km_change_reason: "",
       active: car.active
     });
   };
@@ -248,6 +307,38 @@ export default function AdminCarsPage() {
                 required
               />
             </div>
+            <div className="mt-4">
+              <label className="text-sm">Aarlig km-grense (forsikring)</label>
+              <input
+                type="number"
+                value={form.insurance_annual_km_limit}
+                onChange={(event) => setForm({ ...form, insurance_annual_km_limit: event.target.value })}
+                className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                placeholder="Eks: 30000"
+              />
+              <p className="mt-2 text-xs text-ink/60">
+                Tomt felt betyr at bilen ikke spores mot aarlig forsikringsgrense.
+              </p>
+            </div>
+            {kmChanged && (
+              <div className="mt-4">
+                <label className="text-sm">Begrunnelse for manuell km-endring</label>
+                <textarea
+                  value={form.km_change_reason}
+                  onChange={(event) => setForm({ ...form, km_change_reason: event.target.value })}
+                  className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                  rows={3}
+                  required
+                />
+              </div>
+            )}
+            {editingId && form.insurance_annual_km_limit !== "" && (
+              <div className="mt-4 rounded-xl border border-ink/10 bg-white/70 p-3 text-xs text-ink/70">
+                <p>Tracking-aar: {form.insurance_tracking_year || "-"}</p>
+                <p>Start km i aar: {form.insurance_year_start_km === "" ? "-" : form.insurance_year_start_km}</p>
+                <p>Varsel sendt for aar: {form.insurance_alert_sent_year || "-"}</p>
+              </div>
+            )}
             <label className="mt-4 flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -321,28 +412,39 @@ export default function AdminCarsPage() {
             </div>
           </form>
           <div className="grid gap-4 md:grid-cols-2">
-            {cars.map((car) => (
-              <div key={car.id} className="gradient-card rounded-2xl p-4 shadow-card">
-                <p className="font-medium">{car.model}</p>
-                <p className="text-sm text-ink/60">{car.reg_number}</p>
-                <p className="text-sm text-ink/60">{car.daily_price} kr per dag</p>
-                <p className="text-sm text-ink/60">Navigasjon: {car.has_navigation ? "Ja" : "Nei"}</p>
-                {car.owned_by_third_party && (
-                  <p className="text-sm text-ink/60">
-                    Tredjepart: {car.third_party?.company_name
-                      ? `${car.third_party.name} (${car.third_party.company_name})`
-                      : car.third_party?.name || "-"}
+            {cars.map((car) => {
+              const insurance = calculateInsuranceStatus(car);
+              return (
+                <div key={car.id} className="gradient-card rounded-2xl p-4 shadow-card">
+                  <p className="font-medium">{car.model}</p>
+                  <p className="text-sm text-ink/60">{car.reg_number}</p>
+                  <p className="text-sm text-ink/60">{car.daily_price} kr per dag</p>
+                  <p className="text-sm text-ink/60">Km stand: {toKmInteger(car.current_km)} km</p>
+                  <p className="text-sm text-ink/60">Navigasjon: {car.has_navigation ? "Ja" : "Nei"}</p>
+                  {insurance && (
+                    <div className="mt-2 rounded-xl border border-ink/10 bg-white/70 p-2 text-xs text-ink/70">
+                      <p>Forsikring: {toKmInteger(insurance.annualLimit)} km/aar</p>
+                      <p>Brukt i aar: {toKmInteger(insurance.usedKm)} km</p>
+                      <p>Igjen i aar: {toKmInteger(insurance.remainingKm)} km</p>
+                    </div>
+                  )}
+                  {car.owned_by_third_party && (
+                    <p className="text-sm text-ink/60">
+                      Tredjepart: {car.third_party?.company_name
+                        ? `${car.third_party.name} (${car.third_party.company_name})`
+                        : car.third_party?.name || "-"}
+                    </p>
+                  )}
+                  <p className="text-xs uppercase tracking-wide text-ink/50">
+                    {car.active ? "Aktiv" : "Inaktiv"}
                   </p>
-                )}
-                <p className="text-xs uppercase tracking-wide text-ink/50">
-                  {car.active ? "Aktiv" : "Inaktiv"}
-                </p>
-                <div className="mt-3 flex gap-3 text-xs uppercase tracking-wide">
-                  <button className="text-tide" onClick={() => handleEdit(car)}>Rediger</button>
-                  <button className="text-coral" onClick={() => handleDelete(car.id)}>Slett</button>
+                  <div className="mt-3 flex gap-3 text-xs uppercase tracking-wide">
+                    <button className="text-tide" onClick={() => handleEdit(car)}>Rediger</button>
+                    <button className="text-coral" onClick={() => handleDelete(car.id)}>Slett</button>
+                  </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
     </section>

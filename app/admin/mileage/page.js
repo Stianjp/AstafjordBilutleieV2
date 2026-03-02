@@ -3,12 +3,21 @@
 import { useEffect, useMemo, useState } from "react";
 import { supabase } from "../../../lib/supabaseClient";
 
+const kmValueEquals = (left, right) => {
+  const a = left === "" || left == null ? null : Number(left);
+  const b = right === "" || right == null ? null : Number(right);
+  if (a == null && b == null) return true;
+  return a === b;
+};
+
 export default function AdminMileagePage() {
   const [cars, setCars] = useState([]);
   const [logs, setLogs] = useState([]);
   const [carId, setCarId] = useState("");
   const [kmStart, setKmStart] = useState("");
   const [kmEnd, setKmEnd] = useState("");
+  const [bookingId, setBookingId] = useState("");
+  const [kmOverrideReason, setKmOverrideReason] = useState("");
   const [reason, setReason] = useState("");
   const [message, setMessage] = useState("");
   const [editRows, setEditRows] = useState({});
@@ -75,6 +84,14 @@ export default function AdminMileagePage() {
   }, [kmStart, kmEnd]);
 
   const submitLog = async () => {
+    const selectedCar = cars.find((item) => item.id === carId);
+    const latestCarKm = Number(selectedCar?.current_km || 0);
+    const startChangedFromLatest = !kmValueEquals(kmStart, latestCarKm);
+    if (startChangedFromLatest && !String(kmOverrideReason || "").trim()) {
+      setMessage("Begrunnelse kreves nar start km avviker fra siste km-stand pa bilen.");
+      return;
+    }
+
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) {
@@ -90,9 +107,11 @@ export default function AdminMileagePage() {
       },
       body: JSON.stringify({
         car_id: carId,
-        km_start: Number(kmStart),
-        km_end: Number(kmEnd),
-        reason
+        km_start: kmStart === "" ? null : Number(kmStart),
+        km_end: kmEnd === "" ? null : Number(kmEnd),
+        booking_id: bookingId || null,
+        reason,
+        override_reason: kmOverrideReason || null
       })
     });
 
@@ -103,7 +122,10 @@ export default function AdminMileagePage() {
       setMessage(`Registrert. Total km: ${dataResponse.mileage.driven_km}`);
       setKmStart("");
       setKmEnd("");
+      setBookingId("");
+      setKmOverrideReason("");
       setReason("");
+      loadCars();
       loadLogs();
     }
   };
@@ -128,7 +150,9 @@ export default function AdminMileagePage() {
         km_start: log.km_start ?? "",
         km_end: log.km_end ?? "",
         booking_id: log.booking_id ?? "",
-        reason: log.reason ?? ""
+        reason: log.reason ?? "",
+        override_reason: log.override_reason ?? "",
+        source: log.source || "manual"
       }
     }));
   };
@@ -144,6 +168,15 @@ export default function AdminMileagePage() {
   const saveEdit = async (id) => {
     const draft = editRows[id];
     if (!draft) return;
+    const original = logs.find((log) => log.id === id);
+    const latestCarKm = Number(cars.find((car) => car.id === draft.car_id)?.current_km || 0);
+    const startWasChanged = !kmValueEquals(draft.km_start, original?.km_start ?? null);
+    const startDiffersFromLatest = !kmValueEquals(draft.km_start, latestCarKm);
+    if (startWasChanged && startDiffersFromLatest && !String(draft.override_reason || "").trim()) {
+      setMessage("Begrunnelse kreves nar start km avviker fra siste km-stand pa bilen.");
+      return;
+    }
+
     const { data } = await supabase.auth.getSession();
     const token = data.session?.access_token;
     if (!token) {
@@ -159,10 +192,12 @@ export default function AdminMileagePage() {
       },
       body: JSON.stringify({
         car_id: draft.car_id,
-        km_start: Number(draft.km_start),
-        km_end: Number(draft.km_end),
+        km_start: draft.km_start === "" ? null : Number(draft.km_start),
+        km_end: draft.km_end === "" ? null : Number(draft.km_end),
         booking_id: draft.booking_id || null,
-        reason: draft.reason
+        reason: draft.reason,
+        override_reason: draft.override_reason || null,
+        source: draft.source || "manual"
       })
     });
 
@@ -189,13 +224,19 @@ export default function AdminMileagePage() {
           <label className="text-sm">Bil</label>
           <select
             value={carId}
-            onChange={(event) => setCarId(event.target.value)}
+            onChange={(event) => {
+              setCarId(event.target.value);
+              setKmStart("");
+            }}
             className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
           >
             {cars.map((car) => (
               <option key={car.id} value={car.id}>{car.model} ({car.reg_number})</option>
             ))}
           </select>
+          <p className="mt-2 text-xs text-ink/60">
+            Siste km-stand pa valgt bil: {Math.round(Number(cars.find((item) => item.id === carId)?.current_km || 0))} km
+          </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div>
               <label className="text-sm">Km start</label>
@@ -215,6 +256,24 @@ export default function AdminMileagePage() {
                 className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
               />
             </div>
+          </div>
+          <div className="mt-4">
+            <label className="text-sm">Booking ID (valgfritt)</label>
+            <input
+              value={bookingId}
+              onChange={(event) => setBookingId(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+              placeholder="Knytt registreringen til booking"
+            />
+          </div>
+          <div className="mt-4">
+            <label className="text-sm">Begrunnelse ved avvik i start km</label>
+            <textarea
+              value={kmOverrideReason}
+              onChange={(event) => setKmOverrideReason(event.target.value)}
+              className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+              rows={2}
+            />
           </div>
           <div className="mt-4">
             <label className="text-sm">Total km</label>
@@ -254,6 +313,8 @@ export default function AdminMileagePage() {
                         <th className="py-2">Total</th>
                         <th className="py-2">Booking ID</th>
                         <th className="py-2">Arsak</th>
+                        <th className="py-2">Override</th>
+                        <th className="py-2">Kilde</th>
                         <th className="py-2">Handling</th>
                       </tr>
                     </thead>
@@ -333,6 +394,43 @@ export default function AdminMileagePage() {
                             </td>
                             <td className="py-2">
                               {edit ? (
+                                <input
+                                  value={edit.override_reason}
+                                  onChange={(event) =>
+                                    setEditRows((prev) => ({
+                                      ...prev,
+                                      [log.id]: { ...edit, override_reason: event.target.value }
+                                    }))
+                                  }
+                                  className="w-64 rounded-lg border border-ink/20 bg-white/80 p-2"
+                                />
+                              ) : (
+                                log.override_reason || "-"
+                              )}
+                            </td>
+                            <td className="py-2">
+                              {edit ? (
+                                <select
+                                  value={edit.source}
+                                  onChange={(event) =>
+                                    setEditRows((prev) => ({
+                                      ...prev,
+                                      [log.id]: { ...edit, source: event.target.value }
+                                    }))
+                                  }
+                                  className="rounded-lg border border-ink/20 bg-white/80 p-2"
+                                >
+                                  <option value="manual">manual</option>
+                                  <option value="booking">booking</option>
+                                  <option value="car_adjustment">car_adjustment</option>
+                                  <option value="legacy">legacy</option>
+                                </select>
+                              ) : (
+                                log.source || "manual"
+                              )}
+                            </td>
+                            <td className="py-2">
+                              {edit ? (
                                 <div className="flex gap-2 text-xs uppercase tracking-wide">
                                   <button
                                     className="text-tide"
@@ -361,7 +459,7 @@ export default function AdminMileagePage() {
                       })}
                       {carLogs.length === 0 && (
                         <tr>
-                          <td className="py-3 text-sm text-ink/60" colSpan={6}>
+                          <td className="py-3 text-sm text-ink/60" colSpan={8}>
                             Ingen kjorebokoppforinger enda.
                           </td>
                         </tr>

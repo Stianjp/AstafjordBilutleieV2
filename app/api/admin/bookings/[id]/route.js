@@ -2,6 +2,7 @@ import { supabaseService } from "../../../../../lib/serverSupabase";
 import { getUserFromRequest, isAdminEmail } from "../../../../../lib/auth";
 import { sendBookingDecisionEmail } from "../../../../../lib/email";
 import { calculateDays, calculateFinalPrice, calculateIncludedKm, calculateFees } from "../../../../../lib/pricing";
+import { resolveKmPayload, updateCarKmAndInsurance, upsertBookingMileageLog } from "../../../../../lib/kmService";
 
 export async function PATCH(request, { params }) {
   const { user } = await getUserFromRequest(request);
@@ -97,12 +98,6 @@ export async function PUT(request, { params }) {
     deliveryFee = 0;
   }
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const bookingEndDate = new Date(payload.end_date || booking.end_date);
-  const shouldComplete = payload.end_km != null && bookingEndDate < today;
-  const statusUpdate = shouldComplete ? "completed" : booking.status;
-
   const nextCarId = payload.car_id || booking.car_id;
   let selectedCar = booking.cars;
   if (payload.car_id && payload.car_id !== booking.car_id) {
@@ -116,6 +111,27 @@ export async function PUT(request, { params }) {
     }
     selectedCar = carData;
   }
+
+  let kmPayload;
+  try {
+    kmPayload = resolveKmPayload({
+      authoritativeKm: selectedCar.current_km,
+      requestedStartKm: payload.start_km ?? booking.start_km ?? null,
+      requestedEndKm: payload.end_km ?? booking.end_km ?? null,
+      previousStartKm: booking.start_km ?? null,
+      previousEndKm: booking.end_km ?? null,
+      overrideReason: payload.km_override_reason,
+      requireEndKm: false
+    });
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 400 });
+  }
+
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const bookingEndDate = new Date(payload.end_date || booking.end_date);
+  const shouldComplete = kmPayload.endKm != null && bookingEndDate < today;
+  const statusUpdate = shouldComplete ? "completed" : booking.status;
 
   const basePrice = calculateFinalPrice(days, Number(selectedCar.daily_price), Number(selectedCar.monthly_price_cap));
   const nextChildSeatRequired = payload.child_seat_required ?? booking.child_seat_required ?? false;
@@ -153,8 +169,8 @@ export async function PUT(request, { params }) {
       deductible_reduction_fee: nextDeductibleReductionFee,
       admin_note_1: payload.admin_note_1 ?? booking.admin_note_1 ?? null,
       admin_note_2: payload.admin_note_2 ?? booking.admin_note_2 ?? null,
-      start_km: payload.start_km ?? booking.start_km ?? null,
-      end_km: payload.end_km ?? booking.end_km ?? null,
+      start_km: kmPayload.startKm,
+      end_km: kmPayload.endKm,
       status: statusUpdate
     })
     .eq("id", params.id)
@@ -181,11 +197,29 @@ export async function PUT(request, { params }) {
       .eq("id", updated.customer_id);
   }
 
-  if (payload.end_km != null) {
-    const nextKm = Number(payload.end_km);
+  try {
+    await upsertBookingMileageLog({
+      supabase: supabaseService,
+      bookingId: updated.id,
+      carId: nextCarId,
+      startKm: kmPayload.startKm,
+      endKm: kmPayload.endKm,
+      includedKm: updated.included_km,
+      reason: payload.km_reason || null,
+      overrideReason: kmPayload.overrideReason,
+      source: "booking"
+    });
+
     const currentKm = Number(selectedCar.current_km || 0);
-    const highestKm = Math.max(currentKm, nextKm);
-    await supabaseService.from("cars").update({ current_km: highestKm }).eq("id", nextCarId);
+    if (kmPayload.endKm != null && (kmPayload.endChanged || Number(kmPayload.endKm) > currentKm)) {
+      await updateCarKmAndInsurance({
+        supabase: supabaseService,
+        car: selectedCar,
+        nextKm: kmPayload.endKm
+      });
+    }
+  } catch (error) {
+    return Response.json({ error: error.message }, { status: 500 });
   }
 
   const { data: refreshed, error: refreshError } = await supabaseService
