@@ -338,98 +338,98 @@ export default function AdminMileagePage() {
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 pb-16 pt-6 sm:px-6">
-        <h1 className="font-display text-3xl">Admin: kjørebok</h1>
-        <p className="mt-2 text-sm text-ink/70">Registrer start- og sluttkm og årsaken.</p>
-        <div className="mt-6 gradient-card rounded-3xl p-6 shadow-card">
-          <label className="text-sm">Bil</label>
+        <h1 className="font-display text-4xl text-ink">Admin: kjørebok</h1>
+        <p className="mt-2 text-base text-ink/85">Registrer start- og sluttkm og årsaken.</p>
+        <div className="mt-6 rounded-3xl border border-ink/20 bg-white p-6 shadow-lg">
+          <label className="text-base font-medium text-ink">Bil</label>
           <select
             value={carId}
             onChange={(event) => {
               setCarId(event.target.value);
               setKmStart("");
             }}
-            className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+            className="mt-2 w-full rounded-xl border border-ink/30 bg-white p-3 text-base text-ink"
           >
             {cars.map((car) => (
               <option key={car.id} value={car.id}>{car.model} ({car.reg_number})</option>
             ))}
           </select>
-          <p className="mt-2 text-xs text-ink/60">
+          <p className="mt-2 text-sm text-ink/80">
             Siste km-stand på valgt bil: {Math.round(Number(cars.find((item) => item.id === carId)?.current_km || 0))} km
           </p>
           <div className="mt-4 grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="text-sm">Km start</label>
+              <label className="text-base font-medium text-ink">Km start</label>
               <input
                 type="number"
                 value={kmStart}
                 onChange={(event) => setKmStart(event.target.value)}
-                className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                className="mt-2 w-full rounded-xl border border-ink/30 bg-white p-3 text-base text-ink"
               />
             </div>
             <div>
-              <label className="text-sm">Km slutt</label>
+              <label className="text-base font-medium text-ink">Km slutt</label>
               <input
                 type="number"
                 value={kmEnd}
                 onChange={(event) => setKmEnd(event.target.value)}
-                className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+                className="mt-2 w-full rounded-xl border border-ink/30 bg-white p-3 text-base text-ink"
               />
             </div>
           </div>
           <div className="mt-4">
-            <label className="text-sm">Booking ID (valgfritt)</label>
+            <label className="text-base font-medium text-ink">Booking ID (valgfritt)</label>
             <input
               value={bookingId}
               onChange={(event) => setBookingId(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+              className="mt-2 w-full rounded-xl border border-ink/30 bg-white p-3 text-base text-ink"
               placeholder="Knytt registreringen til booking"
             />
           </div>
           <div className="mt-4">
-            <label className="text-sm">Begrunnelse ved avvik i start km</label>
+            <label className="text-base font-medium text-ink">Begrunnelse ved avvik i start km</label>
             <textarea
               value={kmOverrideReason}
               onChange={(event) => setKmOverrideReason(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+              className="mt-2 w-full rounded-xl border border-ink/30 bg-white p-3 text-base text-ink"
               rows={2}
             />
           </div>
           <div className="mt-4">
-            <label className="text-sm">Total km</label>
-            <p className="mt-2 rounded-xl border border-ink/10 bg-white/70 p-3 text-sm">{totalKm} km</p>
+            <label className="text-base font-medium text-ink">Total km</label>
+            <p className="mt-2 rounded-xl border border-ink/20 bg-white p-3 text-base text-ink">{totalKm} km</p>
           </div>
           <div className="mt-4">
-            <label className="text-sm">Årsak</label>
+            <label className="text-base font-medium text-ink">Årsak</label>
             <textarea
               value={reason}
               onChange={(event) => setReason(event.target.value)}
-              className="mt-2 w-full rounded-xl border border-ink/20 bg-white/80 p-3"
+              className="mt-2 w-full rounded-xl border border-ink/30 bg-white p-3 text-base text-ink"
               rows={3}
             />
           </div>
-          {message && <p className="mt-3 text-sm text-coral">{message}</p>}
+          {message && <p className="mt-3 text-base text-red-700">{message}</p>}
           <button
             onClick={submitLog}
-            className="mt-5 rounded-full bg-ink px-5 py-2 text-sm uppercase tracking-wide text-white"
+            className="mt-5 rounded-full bg-ink px-6 py-3 text-base font-semibold uppercase tracking-wide text-white"
           >
             Registrer
           </button>
         </div>
 
         <div className="mt-10">
-          <h2 className="font-display text-2xl">Historikk per bil</h2>
-          <p className="mt-1 text-sm text-ink/70">
+          <h2 className="font-display text-3xl text-ink">Historikk per bil</h2>
+          <p className="mt-1 text-base text-ink/80">
             Viser {groupedHistory.length} biler og {totalDisplayedLogs} registreringer.
           </p>
 
-          <div className="mt-4 grid gap-3 rounded-2xl border border-ink/10 bg-white/60 p-4 md:grid-cols-2 xl:grid-cols-6">
+          <div className="mt-4 grid gap-3 rounded-2xl border border-ink/20 bg-white p-4 md:grid-cols-2 xl:grid-cols-6">
             <div>
-              <label className="text-xs uppercase tracking-wide text-ink/60">Bil</label>
+              <label className="text-sm font-semibold uppercase tracking-wide text-ink/80">Bil</label>
               <select
                 value={historyCarFilter}
                 onChange={(event) => setHistoryCarFilter(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-ink/20 bg-white/80 p-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-ink/30 bg-white p-2.5 text-base text-ink"
               >
                 <option value="all">Alle biler</option>
                 {cars.map((car) => (
@@ -441,11 +441,11 @@ export default function AdminMileagePage() {
             </div>
 
             <div>
-              <label className="text-xs uppercase tracking-wide text-ink/60">Kilde</label>
+              <label className="text-sm font-semibold uppercase tracking-wide text-ink/80">Kilde</label>
               <select
                 value={historySourceFilter}
                 onChange={(event) => setHistorySourceFilter(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-ink/20 bg-white/80 p-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-ink/30 bg-white p-2.5 text-base text-ink"
               >
                 <option value="all">Alle kilder</option>
                 <option value="manual">manual</option>
@@ -456,11 +456,11 @@ export default function AdminMileagePage() {
             </div>
 
             <div>
-              <label className="text-xs uppercase tracking-wide text-ink/60">Periode</label>
+              <label className="text-sm font-semibold uppercase tracking-wide text-ink/80">Periode</label>
               <select
                 value={historyPeriodFilter}
                 onChange={(event) => setHistoryPeriodFilter(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-ink/20 bg-white/80 p-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-ink/30 bg-white p-2.5 text-base text-ink"
               >
                 <option value="all">Hele historikken</option>
                 <option value="7">Siste 7 dager</option>
@@ -470,11 +470,11 @@ export default function AdminMileagePage() {
             </div>
 
             <div>
-              <label className="text-xs uppercase tracking-wide text-ink/60">Sorter biler</label>
+              <label className="text-sm font-semibold uppercase tracking-wide text-ink/80">Sorter biler</label>
               <select
                 value={historySort}
                 onChange={(event) => setHistorySort(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-ink/20 bg-white/80 p-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-ink/30 bg-white p-2.5 text-base text-ink"
               >
                 <option value="latest_desc">Sist registrert (nyeste)</option>
                 <option value="latest_asc">Sist registrert (eldste)</option>
@@ -484,16 +484,16 @@ export default function AdminMileagePage() {
             </div>
 
             <div className="xl:col-span-2">
-              <label className="text-xs uppercase tracking-wide text-ink/60">Søk</label>
+              <label className="text-sm font-semibold uppercase tracking-wide text-ink/80">Søk</label>
               <input
                 value={historyQuery}
                 onChange={(event) => setHistoryQuery(event.target.value)}
-                className="mt-1 w-full rounded-lg border border-ink/20 bg-white/80 p-2 text-sm"
+                className="mt-1 w-full rounded-lg border border-ink/30 bg-white p-2.5 text-base text-ink"
                 placeholder="Søk i modell, regnr, booking-ID, årsak"
               />
             </div>
 
-            <label className="md:col-span-2 xl:col-span-6 flex items-center gap-2 text-sm text-ink/70">
+            <label className="md:col-span-2 xl:col-span-6 flex items-center gap-2 text-base text-ink/85">
               <input
                 type="checkbox"
                 checked={showOnlyCarsWithLogs}
@@ -508,34 +508,37 @@ export default function AdminMileagePage() {
             const carLogs = entry.logs;
             const latest = carLogs[0];
             return (
-              <div key={entry.carId || `car-${car?.reg_number || "unknown"}`} className="mt-6">
+              <div
+                key={entry.carId || `car-${car?.reg_number || "unknown"}`}
+                className="mt-6 rounded-2xl border border-ink/20 bg-white p-4 shadow-sm"
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <p className="font-medium">{car?.model || "Ukjent bil"} ({car?.reg_number || "-"})</p>
-                  <p className="text-xs text-ink/60">
+                  <p className="text-xl font-semibold text-ink">{car?.model || "Ukjent bil"} ({car?.reg_number || "-"})</p>
+                  <p className="text-sm text-ink/80">
                     Sist registrert: {latest ? formatDateTimeShort(latest.created_at || latest.updated_at) : "-"} · {carLogs.length} oppføringer
                   </p>
                 </div>
                 <div className="mt-3 overflow-x-auto">
-                  <table className="w-full border-collapse text-sm">
+                  <table className="w-full border-collapse text-base">
                     <thead>
-                      <tr className="text-left text-xs uppercase tracking-wide text-ink/50">
-                        <th className="py-2">Start km</th>
-                        <th className="py-2">Slutt km</th>
-                        <th className="py-2">Total</th>
-                        <th className="py-2">Booking ID</th>
-                        <th className="py-2">Årsak</th>
-                        <th className="py-2">Override</th>
-                        <th className="py-2">Kilde</th>
-                        <th className="py-2">Registrert</th>
-                        <th className="py-2">Handling</th>
+                      <tr className="text-left text-sm uppercase tracking-wide text-ink/75">
+                        <th className="py-3">Start km</th>
+                        <th className="py-3">Slutt km</th>
+                        <th className="py-3">Total</th>
+                        <th className="py-3">Booking ID</th>
+                        <th className="py-3">Årsak</th>
+                        <th className="py-3">Override</th>
+                        <th className="py-3">Kilde</th>
+                        <th className="py-3">Registrert</th>
+                        <th className="py-3">Handling</th>
                       </tr>
                     </thead>
                     <tbody>
                       {carLogs.map((log) => {
                         const edit = editRows[log.id];
                         return (
-                          <tr key={log.id} className="border-t border-ink/10">
-                            <td className="py-2">
+                          <tr key={log.id} className="border-t border-ink/20">
+                            <td className="py-3 text-ink">
                               {edit ? (
                                 <input
                                   type="number"
@@ -546,13 +549,13 @@ export default function AdminMileagePage() {
                                       [log.id]: { ...edit, km_start: event.target.value }
                                     }))
                                   }
-                                  className="w-28 rounded-lg border border-ink/20 bg-white/80 p-2"
+                                  className="w-28 rounded-lg border border-ink/30 bg-white p-2.5 text-base text-ink"
                                 />
                               ) : (
                                 `${log.km_start}`
                               )}
                             </td>
-                            <td className="py-2">
+                            <td className="py-3 text-ink">
                               {edit ? (
                                 <input
                                   type="number"
@@ -563,16 +566,16 @@ export default function AdminMileagePage() {
                                       [log.id]: { ...edit, km_end: event.target.value }
                                     }))
                                   }
-                                  className="w-28 rounded-lg border border-ink/20 bg-white/80 p-2"
+                                  className="w-28 rounded-lg border border-ink/30 bg-white p-2.5 text-base text-ink"
                                 />
                               ) : (
                                 `${log.km_end}`
                               )}
                             </td>
-                            <td className="py-2">
+                            <td className="py-3 text-ink">
                               {edit ? `${rowTotal(edit)} km` : `${log.driven_km} km`}
                             </td>
-                            <td className="py-2">
+                            <td className="py-3 text-ink">
                               {edit ? (
                                 <input
                                   value={edit.booking_id}
@@ -582,13 +585,13 @@ export default function AdminMileagePage() {
                                       [log.id]: { ...edit, booking_id: event.target.value }
                                     }))
                                   }
-                                  className="w-48 rounded-lg border border-ink/20 bg-white/80 p-2"
+                                  className="w-48 rounded-lg border border-ink/30 bg-white p-2.5 text-base text-ink"
                                 />
                               ) : (
                                 log.booking_id || "-"
                               )}
                             </td>
-                            <td className="py-2">
+                            <td className="py-3 text-ink">
                               {edit ? (
                                 <input
                                   value={edit.reason}
@@ -598,13 +601,13 @@ export default function AdminMileagePage() {
                                       [log.id]: { ...edit, reason: event.target.value }
                                     }))
                                   }
-                                  className="w-64 rounded-lg border border-ink/20 bg-white/80 p-2"
+                                  className="w-64 rounded-lg border border-ink/30 bg-white p-2.5 text-base text-ink"
                                 />
                               ) : (
                                 log.reason || "-"
                               )}
                             </td>
-                            <td className="py-2">
+                            <td className="py-3 text-ink">
                               {edit ? (
                                 <input
                                   value={edit.override_reason}
@@ -614,13 +617,13 @@ export default function AdminMileagePage() {
                                       [log.id]: { ...edit, override_reason: event.target.value }
                                     }))
                                   }
-                                  className="w-64 rounded-lg border border-ink/20 bg-white/80 p-2"
+                                  className="w-64 rounded-lg border border-ink/30 bg-white p-2.5 text-base text-ink"
                                 />
                               ) : (
                                 log.override_reason || "-"
                               )}
                             </td>
-                            <td className="py-2">
+                            <td className="py-3 text-ink">
                               {edit ? (
                                 <select
                                   value={edit.source}
@@ -630,7 +633,7 @@ export default function AdminMileagePage() {
                                       [log.id]: { ...edit, source: event.target.value }
                                     }))
                                   }
-                                  className="rounded-lg border border-ink/20 bg-white/80 p-2"
+                                  className="rounded-lg border border-ink/30 bg-white p-2.5 text-base text-ink"
                                 >
                                   <option value="manual">manual</option>
                                   <option value="booking">booking</option>
@@ -641,20 +644,20 @@ export default function AdminMileagePage() {
                                 log.source || "manual"
                               )}
                             </td>
-                            <td className="py-2 whitespace-nowrap text-ink/70">
+                            <td className="py-3 whitespace-nowrap text-ink/80">
                               {formatDateTimeShort(log.created_at || log.updated_at)}
                             </td>
-                            <td className="py-2">
+                            <td className="py-3">
                               {edit ? (
-                                <div className="flex gap-2 text-xs uppercase tracking-wide">
+                                <div className="flex gap-3 text-sm uppercase tracking-wide">
                                   <button
-                                    className="text-tide"
+                                    className="font-semibold text-tide"
                                     onClick={() => saveEdit(log.id)}
                                   >
                                     Lagre
                                   </button>
                                   <button
-                                    className="text-coral"
+                                    className="font-semibold text-coral"
                                     onClick={() => cancelEdit(log.id)}
                                   >
                                     Avbryt
@@ -662,7 +665,7 @@ export default function AdminMileagePage() {
                                 </div>
                               ) : (
                                 <button
-                                  className="text-xs uppercase tracking-wide text-ink/60"
+                                  className="text-sm font-semibold uppercase tracking-wide text-ink/80"
                                   onClick={() => startEdit(log)}
                                 >
                                   Rediger
@@ -674,7 +677,7 @@ export default function AdminMileagePage() {
                       })}
                       {carLogs.length === 0 && (
                         <tr>
-                          <td className="py-3 text-sm text-ink/60" colSpan={9}>
+                          <td className="py-4 text-base text-ink/70" colSpan={9}>
                             Ingen kjørebokoppføringer enda.
                           </td>
                         </tr>
@@ -687,7 +690,7 @@ export default function AdminMileagePage() {
           })}
 
           {groupedHistory.length === 0 && (
-            <p className="mt-6 text-sm text-ink/60">
+            <p className="mt-6 text-base text-ink/70">
               Ingen treff med valgt filtrering.
             </p>
           )}
