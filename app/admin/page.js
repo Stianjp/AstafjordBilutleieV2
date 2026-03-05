@@ -203,18 +203,19 @@ export default function AdminDashboard() {
       const next = { ...prev };
       nextBookings.forEach((booking) => {
         const latestKm = carMap.get(booking.car_id)?.current_km ?? "";
-        const defaultStartKm = booking.start_km ?? latestKm;
+        const hasStoredStartKm = booking.start_km != null && booking.start_km !== "";
+        const resolvedStartKm = hasStoredStartKm ? booking.start_km : latestKm;
         if (!next[booking.id]) {
           next[booking.id] = {
-            start_km: defaultStartKm,
+            start_km: resolvedStartKm,
             end_km: booking.end_km ?? "",
             km_override_reason: ""
           };
         } else {
           next[booking.id] = {
             ...next[booking.id],
-            start_km: next[booking.id].start_km === "" ? defaultStartKm : next[booking.id].start_km,
-            end_km: next[booking.id].end_km === "" ? booking.end_km ?? "" : next[booking.id].end_km,
+            start_km: resolvedStartKm,
+            end_km: booking.end_km ?? next[booking.id].end_km ?? "",
             km_override_reason: next[booking.id].km_override_reason ?? ""
           };
         }
